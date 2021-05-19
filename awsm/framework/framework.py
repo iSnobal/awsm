@@ -508,13 +508,13 @@ def run_awsm_daily_ops(config_file):
                                  paths['basin'],
                                  'wy{}'.format(wy),
                                  paths['project_name'],
-                                 'runs')
+                                 )
 
     prev_data_base = os.path.join(paths['path_dr'],
                                   paths['basin'],
                                   'wy{}'.format(wy),
                                   paths['project_name'],
-                                  'data')
+                                  )
 
     # find day of start and end
     start_day = pd.to_datetime(model_start.strftime(fmt_day))
