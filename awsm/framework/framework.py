@@ -505,17 +505,12 @@ def run_awsm_daily_ops(config_file):
     # find output location for previous output
     paths = config.cfg['paths']
 
-    prev_out_base = os.path.join(paths['path_dr'],
-                                 paths['basin'],
-                                 'wy{}'.format(wy),
-                                 paths['project_name'],
-                                 )
-
-    prev_data_base = os.path.join(paths['path_dr'],
-                                  paths['basin'],
-                                  'wy{}'.format(wy),
-                                  paths['project_name'],
-                                  )
+    base_path = os.path.join(
+        paths['path_dr'],
+        paths['basin'],
+        'wy{}'.format(wy),
+        paths['project_name'],
+    )
 
     # find day of start and end
     start_day = pd.to_datetime(model_start.strftime(fmt_day))
@@ -551,21 +546,26 @@ def run_awsm_daily_ops(config_file):
         if idd > 0:
             # find previous output file
             prev_day = sd - pd.to_timedelta(1, unit='D')
-            prev_out = os.path.join(prev_out_base,
-                                    'run{}'.format(prev_day.strftime(fmt_day)),
-                                    'snow.nc')
+            prev_snow = os.path.join(
+                base_path,
+                'run{}'.format(prev_day.strftime(fmt_day)),
+                'snow.nc'
+            )
             # reset if running the model
             if new_config.cfg['awsm master']['model_type'] is not None:
                 new_config.raw_cfg['files']['init_type'] = 'netcdf_out'
-                new_config.raw_cfg['files']['init_file'] = prev_out
+                new_config.raw_cfg['files']['init_file'] = prev_snow
 
             # if we have a previous storm day file, use it
-            prev_storm = os.path.join(prev_data_base,
-                                      'data{}'.format(
-                                          prev_day.strftime(fmt_day)),
-                                      'smrfOutputs', 'storm_days.nc')
+            prev_storm = os.path.join(
+                base_path,
+                'run{}'.format(prev_day.strftime(fmt_day)),
+                'storm_days.nc'
+            )
             if os.path.isfile(prev_storm):
                 new_config.raw_cfg['precip']['storm_days_restart'] = prev_storm
+            else:
+                new_config.raw_cfg['precip']['storm_days_restart'] = ''
 
         # apply recipes with new settings
         new_config.apply_recipes()
