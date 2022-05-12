@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/338433127.svg)](https://zenodo.org/badge/latestdoi/338433127)
+
 # Fork of the Automated Water Supply Model (AWSM)
 
 This is a fork of the [USDA-ARS-NWRC AWSM](https://github.com/USDA-ARS-NWRC/awsm) repo with the 
