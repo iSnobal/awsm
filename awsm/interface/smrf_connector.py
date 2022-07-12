@@ -135,6 +135,9 @@ class SMRFConnector():
                          set(self.force[f].dimensions.keys()))
                 v = [fv for fv in v if fv != 'projection'][0]
 
+                if f is 'net_solar':
+                    v = 'net_solar'
+
                 # make sure you're in the same timezone
                 if hasattr(self.force[f].variables['time'], 'time_zone'):
                     tstep_zone = tstep.astimezone(pytz.timezone(
