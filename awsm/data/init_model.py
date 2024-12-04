@@ -200,7 +200,10 @@ class ModelInit():
 
         ds = xr.open_dataset(self.init_file)
 
-        init_data = ds.sel(time=self.start_date, method='nearest')
+        # Xarray needs a timezone naive object for selecting
+        init_data = ds.sel(
+            time=self.start_date.replace(tzinfo=None), method='nearest'
+        )
         time_diff = self.start_date.tz_localize(None) - init_data.time.values
 
         if time_diff.total_seconds() < 0 or \
