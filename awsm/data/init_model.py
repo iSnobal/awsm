@@ -61,7 +61,8 @@ class ModelInit():
 
         if self.init_file is not None:
             self._logger.info(
-                'Using {} to build model init state.'.format(self.init_file))
+                'Using {} to build model init state.'.format(self.init_file)
+            )
 
         # type of model run
         self.model_type = cfg['awsm master']['model_type']
@@ -211,8 +212,11 @@ class ModelInit():
             self._logger.error(
                 'No time in restart file that is within a day of restart time')
 
-        self._logger.warning(
-            'Initializing PySnobal with state from {}'.format(init_data.time))
+        self._logger.info(
+            'Initializing PySnobal with state from {}'.format(
+                str(init_data.time.values)
+            )
+        )
 
         self.init['z_s'] = init_data.thickness.values
         self.init['rho'] = init_data.snow_density.values
