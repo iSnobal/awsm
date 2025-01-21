@@ -101,6 +101,8 @@ def mod_config(
         print(
             f"** Running model with medium mass theshold of: {medium_threshold}"
         )
+        # No need to run SMRF again when changing the mass threshold for iSnobal
+        new_config.raw_cfg['awsm master']['run_smrf'] = False
 
     return new_config
 
