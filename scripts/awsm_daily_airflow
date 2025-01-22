@@ -118,6 +118,17 @@ def mod_config(
         # No need to run SMRF again when changing the mass threshold for iSnobal
         new_config.raw_cfg['awsm master']['run_smrf'] = False
 
+        # Remove files from previous runs before attempting a re-run
+        current_day_output = output_for_date(new_config, start_date)
+
+        snow_nc = os.path.join(current_day_output, 'snow.nc')
+        if os.path.exists(snow_nc):
+            os.remove(snow_nc)
+
+        em_nc = os.path.join(current_day_output, 'em.nc')
+        if os.path.exists(em_nc):
+            os.remove(em_nc)
+
     return new_config
 
 
