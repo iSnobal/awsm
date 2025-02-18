@@ -33,8 +33,6 @@ setup(
         './scripts/wyhr',
         './scripts/plot_csv',
         './scripts/clean_awsm',
-        './scripts/awsm_daily',
-        './scripts/awsm_daily_airflow'
     ],
     install_requires=requirements,
     license="CC0 1.0",
