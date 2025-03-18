@@ -524,11 +524,6 @@ def run_awsm_daily_ops(config_file):
     # loop through daily runs and run awsm
     for idd, sd in enumerate(date_list):
         new_config = copy.deepcopy(config)
-        if idd > 0:
-            new_config.raw_cfg['isnobal restart']['restart_crash'] = False
-            new_config.raw_cfg['grid']['thresh_normal'] = 60
-            new_config.raw_cfg['grid']['thresh_medium'] = 10
-            new_config.raw_cfg['grid']['thresh_small'] = 1
         # get the end of the day
         ed = sd + add_day
 
