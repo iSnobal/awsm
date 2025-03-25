@@ -510,7 +510,7 @@ def run_awsm_daily_ops(config_file):
     )
 
     # loop through daily runs and run awsm
-    while start_day < end_day:
+    while start_day <= end_day:
         new_config = copy.deepcopy(config)
         run_start_day = start_day
         run_end_day = run_start_day + add_day
