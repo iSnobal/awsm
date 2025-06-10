@@ -130,7 +130,7 @@ def set_single_day(config, start_date):
 
     Returns
     -------
-    Tupel of UserConfig and start_date
+    Tuple of UserConfig and start_date
     """
     start_date = pd.to_datetime(start_date)
     end_date = start_date + DAY_HOURS
@@ -199,7 +199,7 @@ def mod_config(
 
 def run_awsm_daily(config_file):
     """
-    Run each day seperately. Calls run_awsm
+    Run each day separately. Calls run_awsm
     """
     config = parse_config(config_file)
 
@@ -227,26 +227,27 @@ def run_awsm_daily(config_file):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description='Run AWSM for a single day'
+        description='Run AWSM with given config file.'
     )
 
     parser.add_argument(
         '-c', '--config-file',
         required=True,
-        help='Config file that will be modified for the current run date'
+        help='Path to .ini config file.'
     )
     parser.add_argument(
         '-sd', '--start_date',
         required=False,
         default=None,
-        help='start date for run'
+        help='Overwrite the start date in the .ini and force a single day run. '
+             'Format: YYYYMMDD.'
     )
     parser.add_argument(
         "-np", "--no_previous",
         action="store_true",
         default=False,
-        help="Doesn't need to find a previous snow state "
-             "from directory structure"
+        help="Skip finding a previous snow state and storm day file. Usually "
+             "used when running the first day."
     )
     parser.add_argument(
         '-t', '--threshold',
@@ -258,7 +259,7 @@ def parse_arguments():
         '-mt', '--medium-threshold',
         type=int,
         default=25,
-        help='Medium mass threshold. Default: 25'
+        help='Set the medium mass threshold. Default: 25'
     )
 
     return parser.parse_args()
