@@ -28,12 +28,11 @@ setup(
             './framework/recipes.ini'
         ]
     },
-    scripts=[
-        './scripts/awsm',
-        './scripts/wyhr',
-        './scripts/plot_csv',
-        './scripts/clean_awsm',
-    ],
+    entry_points={
+        'console_scripts': [
+            'awsm=awsm.cli:main',
+        ],
+    },
     install_requires=requirements,
     license="CC0 1.0",
     zip_safe=False,

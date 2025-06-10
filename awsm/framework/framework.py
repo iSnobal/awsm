@@ -10,7 +10,7 @@ import netCDF4 as nc
 import pytz
 from inicheck.config import MasterConfig, UserConfig
 from inicheck.output import print_config_report, generate_config
-from inicheck.tools import get_user_config, check_config, cast_all_variables
+from inicheck.tools import get_user_config, check_config
 from smrf.utils import utils
 import smrf
 
@@ -465,86 +465,6 @@ class AWSM():
             'AWSM finished in: {}'.format(datetime.now() - self.start_time)
         )
         self._logger.info('AWSM closed --> %s' % datetime.now())
-
-
-def run_awsm_daily_ops(config_file):
-    """
-    Run each day seperately. Calls run_awsm
-    """
-    # define some formats
-    fmt_day = '%Y%m%d'
-    fmt_cfg = '%Y-%m-%d %H:%M'
-    add_day = pd.to_timedelta(23, unit='h')
-
-    # get config instance
-    config = get_user_config(config_file, modules=['smrf', 'awsm'])
-    config.apply_recipes()
-    config = cast_all_variables(config, config.mcfg)
-
-    # get the water year
-    cfg_start_date = pd.to_datetime(config.cfg['time']['start_date'])
-    tzinfo = pytz.timezone(config.cfg['time']['time_zone'])
-    wy = utils.water_day(cfg_start_date.replace(tzinfo=tzinfo))[1]
-
-    # find the model start depending on restart
-    if config.cfg['isnobal restart']['restart_crash']:
-        offset_wyhr = int(config.cfg['isnobal restart']['wyh_restart_output'])
-        wy_start = pd.to_datetime('{:d}-10-01'.format(wy - 1))
-        model_start = wy_start + pd.to_timedelta(offset_wyhr, unit='h')
-    else:
-        model_start = config.cfg['time']['start_date']
-
-    model_end = config.cfg['time']['end_date']
-
-    # find day of start and end
-    start_day = pd.to_datetime(model_start.strftime(fmt_day))
-    end_day = pd.to_datetime(model_end.strftime(fmt_day))
-
-    # find output location for previous output
-    paths = config.cfg['paths']
-    base_path = os.path.join(
-        paths['path_dr'],
-        paths['basin'],
-        'wy{}'.format(wy),
-        paths['project_name'],
-    )
-
-    # loop through daily runs and run awsm
-    while start_day <= end_day:
-        new_config = copy.deepcopy(config)
-        run_start_day = start_day
-        run_end_day = run_start_day + add_day
-
-        # set the start and end dates
-        new_config.raw_cfg['time']['start_date'] = run_start_day.strftime(fmt_cfg)
-        new_config.raw_cfg['time']['end_date'] = run_end_day.strftime(fmt_cfg)
-
-        # find previous output file
-        prev_day = run_start_day - pd.to_timedelta(1, unit='D')
-        # Snow state variables
-        prev_snow = os.path.join(
-            base_path,
-            'run{}'.format(prev_day.strftime(fmt_day)),
-            'snow.nc'
-        )
-        new_config.raw_cfg['files']['init_file'] = prev_snow
-
-        # Snowfall days
-        prev_storm = os.path.join(
-            base_path,
-            'run{}'.format(prev_day.strftime(fmt_day)),
-            'storm_days.nc'
-        )
-        new_config.raw_cfg['precip']['storm_days_restart'] = prev_storm
-
-        # apply recipes with new settings
-        new_config.apply_recipes()
-        new_config = cast_all_variables(new_config, new_config.mcfg)
-
-        # run awsm for the day
-        run_awsm(new_config)
-
-        start_day += pd.to_timedelta(1, unit='D')
 
 
 def run_awsm(config, testing=False):
