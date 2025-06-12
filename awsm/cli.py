@@ -240,7 +240,7 @@ def parse_arguments():
         required=False,
         default=None,
         help='Overwrite the start date in the .ini and force a single day run. '
-             'Format: YYYYMMDD.'
+             'Format: YYYYMMDD or YYYY-MM-DD'
     )
     parser.add_argument(
         "-np", "--no_previous",
