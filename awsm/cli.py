@@ -240,7 +240,7 @@ def parse_arguments():
     )
 
     parser.add_argument(
-        '-c', '--config-file',
+        '-c', '--config_file',
         required=True,
         help='Path to .ini config file.'
     )
@@ -265,7 +265,7 @@ def parse_arguments():
         help='Run iSnobal with different mass threshold'
     )
     parser.add_argument(
-        '-mt', '--medium-threshold',
+        '-mt', '--medium_threshold',
         type=int,
         default=25,
         help='Set the medium mass threshold. Default: 25'

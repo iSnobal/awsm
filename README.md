@@ -38,15 +38,14 @@ Run AWSM with given config file.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c CONFIG_FILE, --config-file CONFIG_FILE
+  -c CONFIG_FILE, --config_file CONFIG_FILE
                         Path to .ini config file.
   -sd START_DATE, --start_date START_DATE
-                        Overwrite the start date in the .ini and force a single day run. Format: YYYYMMDD.
+                        Overwrite the start date in the .ini and force a single day run. Format: YYYYMMDD or YYYY-MM-DD
   -np, --no_previous    Skip finding a previous snow state and storm day file. Usually used when running the first day.
   -t, --threshold       Run iSnobal with different mass threshold
-  -mt MEDIUM_THRESHOLD, --medium-threshold MEDIUM_THRESHOLD
+  -mt MEDIUM_THRESHOLD, --medium_threshold MEDIUM_THRESHOLD
                         Set the medium mass threshold. Default: 25
-
 ```
 ## History
 First used in a publication in the 
