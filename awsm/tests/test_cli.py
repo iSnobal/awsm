@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import MagicMock, patch
-import datetime
 import pytz
 import os
 
@@ -8,7 +7,8 @@ import pandas as pd
 
 from awsm.cli import (
     output_for_date, set_previous_day_outputs, set_single_day, mod_config,
-    run_awsm_daily, DATE_FORMAT, DATE_TIME_FORMAT, DAY_HOURS,
+    run_awsm_daily, DATE_FORMAT, DATE_TIME_FORMAT, DAY_HOURS, parse_arguments,
+    main
 )
 
 class TestOutputForDate(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestOutputForDate(unittest.TestCase):
 
     @patch('smrf.utils.utils.water_day')
     def test_output_for_date(self, mock_water_day):
-        test_date = datetime.datetime(2023, 4, 15, 12, 0)
+        test_date = pd.Timestamp("2023-04-15 00:00")
         mock_water_day.return_value = (197, 2023)
 
         result = output_for_date(self.mock_config, test_date)
@@ -47,12 +47,12 @@ class TestOutputForDate(unittest.TestCase):
 
     @patch('smrf.utils.utils.water_day')
     def test_output_for_date_path_format(self, mock_water_day):
-        test_date = datetime.datetime(2020, 1, 2, 3, 4)
+        test_date = pd.Timestamp("2023-04-15 00:00")
         mock_water_day.return_value = (94, 2020)
 
         result = output_for_date(self.mock_config, test_date)
 
-        self.assertTrue(result.endswith('run20200102'))
+        self.assertTrue(result.endswith('run20230415'))
         self.assertIn('wy2020', result)
         self.assertIn('test_basin', result)
         self.assertIn('test_project', result)
@@ -113,7 +113,6 @@ class TestSetSingleDay(unittest.TestCase):
         config, _ = set_single_day(self.mock_config, start_date)
         self.assertIs(config, self.mock_config)
 
-
 class TestModConfig(unittest.TestCase):
     @patch('awsm.cli.apply_and_cast_variables')
     def setUp(self, mock_apply_and_cast):
@@ -131,7 +130,7 @@ class TestModConfig(unittest.TestCase):
 
         # Configure mocks
         self.mock_apply_and_cast = mock_apply_and_cast
-        mock_apply_and_cast.side_effect = lambda config: config
+        mock_apply_and_cast.side_effect = lambda config_arg: config_arg
 
     @patch('awsm.cli.parse_config')
     def test_mod_config_no_previous_no_threshold(self, mock_parse_config):
@@ -254,7 +253,7 @@ class TestRunAwsmDaily(unittest.TestCase):
 
         # Configure mocks
         self.mock_apply_and_cast = mock_apply_and_cast
-        mock_apply_and_cast.side_effect = lambda config: config
+        mock_apply_and_cast.side_effect = lambda config_arg: config_arg
 
     @patch('awsm.cli.run_awsm')
     @patch('awsm.cli.set_previous_day_outputs')
@@ -274,3 +273,100 @@ class TestRunAwsmDaily(unittest.TestCase):
                 date,
                 self.config.raw_cfg['time']['start_date'] + pd.Timedelta(days=index)
             )
+
+class TestParseArguments(unittest.TestCase):
+    def test_parse_minimum_required(self):
+        parsed_args = parse_arguments(
+            ['--config_file', 'config.ini']
+        )
+        assert parsed_args.config_file == 'config.ini'
+        assert parsed_args.start_date is None
+        assert parsed_args.no_previous is False
+        assert parsed_args.threshold is False
+        assert parsed_args.medium_threshold == 25
+
+    def test_parse_with_start_date(self):
+        parsed_args = parse_arguments(
+            ['--config_file', 'config.ini', '--start_date', '2023-01-01']
+        )
+        assert parsed_args.config_file == 'config.ini'
+        assert parsed_args.start_date == '2023-01-01'
+        assert parsed_args.no_previous is False
+        assert parsed_args.threshold is False
+        assert parsed_args.medium_threshold == 25
+
+    def test_parse_no_previous(self):
+        parsed_args = parse_arguments(
+            [
+                '--config_file', 'config.ini',
+                '--start_date', '2023-01-01',
+                '--no_previous',
+            ]
+        )
+        assert parsed_args.config_file == 'config.ini'
+        assert parsed_args.start_date == '2023-01-01'
+        assert parsed_args.no_previous is True
+        assert parsed_args.threshold is False
+        assert parsed_args.medium_threshold == 25
+
+    def test_parse_threshold(self):
+        parsed_args = parse_arguments(
+            [
+                '--config_file', 'config.ini',
+                '--start_date', '2023-01-01',
+                '--threshold',
+            ]
+        )
+        assert parsed_args.config_file == 'config.ini'
+        assert parsed_args.start_date == '2023-01-01'
+        assert parsed_args.no_previous is False
+        assert parsed_args.threshold is True
+        assert parsed_args.medium_threshold == 25
+
+    def test_parse_threshold_and_value(self):
+        parsed_args = parse_arguments(
+            [
+                '--config_file', 'config.ini',
+                '--start_date', '2023-01-01',
+                '--threshold',
+                '--medium_threshold', '20'
+            ]
+        )
+        assert parsed_args.config_file == 'config.ini'
+        assert parsed_args.start_date == '2023-01-01'
+        assert parsed_args.no_previous is False
+        assert parsed_args.threshold is True
+        assert parsed_args.medium_threshold == 20
+
+class TestMain(unittest.TestCase):
+    @patch('awsm.cli.mod_config')
+    @patch('awsm.cli.run_awsm_daily')
+    def test_main_runs_awsm_daily(
+        self, mock_awsm_daily, mock_mod_config
+    ):
+        with patch('sys.argv', ['awsm', '-c', 'config.ini']):
+            main()
+
+        assert mock_awsm_daily.call_count == 1
+        assert mock_mod_config.call_count == 0
+
+    @patch('awsm.cli.mod_config')
+    @patch('awsm.cli.run_awsm')
+    @patch('awsm.cli.run_awsm_daily')
+    def test_main_runs_awsm(
+        self, mock_awsm_daily, mock_run_awsm, mock_mod_config
+    ):
+        updated_config = MagicMock()
+        mock_mod_config.return_value = updated_config
+        arguments = ['awsm', '-c', 'config.ini', '-sd', '2023-10-01']
+        with patch('sys.argv', arguments):
+            main()
+
+        assert mock_mod_config.call_count == 1
+        assert mock_run_awsm.call_count == 1
+        assert mock_awsm_daily.call_count == 0
+
+        assert mock_mod_config.call_args[0][0] == 'config.ini'
+        assert mock_mod_config.call_args[0][1] == '2023-10-01'
+
+        assert mock_run_awsm.call_args[0][0] == updated_config

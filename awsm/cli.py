@@ -1,6 +1,7 @@
 import argparse
 import copy
 import os
+import sys
 from typing import Tuple
 
 import pandas as pd
@@ -37,17 +38,14 @@ def output_for_date(config: UserConfig, date: pd.Timestamp):
 
     # Get base output location
     paths = config.cfg['paths']
-    base_output = os.path.join(
+    return os.path.join(
         paths['path_dr'],
         paths['basin'],
         'wy{}'.format(wy),
         paths['project_name'],
-    )
-
-    return os.path.join(
-        base_output,
         f'run{format(date.strftime(DATE_FORMAT))}',
     )
+
 
 def set_previous_day_outputs(config: UserConfig, start_date: pd.Timestamp) \
     -> UserConfig:
@@ -184,7 +182,7 @@ def mod_config(
     if threshold:
         config.raw_cfg['grid']['thresh_medium'] = medium_threshold
         print(
-            f"** Running model with medium mass theshold of: {medium_threshold}"
+            f"** Running model with medium mass threshold of: {medium_threshold}"
         )
         # No need to run SMRF again when changing the mass threshold for iSnobal
         config.raw_cfg['awsm master']['run_smrf'] = False
@@ -234,7 +232,9 @@ def run_awsm_daily(config_file: str):
         start_day += pd.to_timedelta(1, unit='D')
 
 
-def parse_arguments():
+def parse_arguments(args=None):
+    args = sys.argv[1:] if args is None else args
+
     parser = argparse.ArgumentParser(
         description='Run AWSM with given config file.'
     )
@@ -254,14 +254,12 @@ def parse_arguments():
     parser.add_argument(
         "-np", "--no_previous",
         action="store_true",
-        default=False,
         help="Skip finding a previous snow state and storm day file. Usually "
              "used when running the first day."
     )
     parser.add_argument(
         '-t', '--threshold',
         action="store_true",
-        default=False,
         help='Run iSnobal with different mass threshold'
     )
     parser.add_argument(
@@ -271,11 +269,12 @@ def parse_arguments():
         help='Set the medium mass threshold. Default: 25'
     )
 
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def main():
     args = parse_arguments()
+
     # Run a single day only when given a start date via parameters
     if args.start_date is not None:
         # set dates and paths
