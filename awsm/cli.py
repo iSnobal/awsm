@@ -1,20 +1,21 @@
 import argparse
 import copy
 import os
+from typing import Tuple
 
 import pandas as pd
 import pytz
-from inicheck.tools import get_user_config, cast_all_variables
-from smrf.utils import utils
+from inicheck.tools import UserConfig, cast_all_variables, get_user_config
 
 from awsm.framework.framework import run_awsm
+from smrf.utils import utils
 
 DATE_FORMAT = '%Y%m%d'
 DATE_TIME_FORMAT = '%Y-%m-%d %H:%M'
 DAY_HOURS = pd.to_timedelta(23, unit='h')
 
 
-def output_for_date(config, date):
+def output_for_date(config: UserConfig, date: pd.Timestamp):
     """
     Get absolute folder path for model output of a date
 
@@ -48,8 +49,8 @@ def output_for_date(config, date):
         f'run{format(date.strftime(DATE_FORMAT))}',
     )
 
-
-def set_previous_day_outputs(config, start_date):
+def set_previous_day_outputs(config: UserConfig, start_date: pd.Timestamp) \
+    -> UserConfig:
     """
     Set the previous day output for snow and storm days in the config
 
@@ -80,7 +81,7 @@ def set_previous_day_outputs(config, start_date):
     return config
 
 
-def apply_and_cast_variables(config):
+def apply_and_cast_variables(config: UserConfig) -> UserConfig:
     """
     Apply recipes and cast all variables in the config
 
@@ -98,7 +99,7 @@ def apply_and_cast_variables(config):
     return cast_all_variables(config, config.mcfg)
 
 
-def parse_config(config_file):
+def parse_config(config_file) -> UserConfig:
     """
     Create config instance and parse all values for AWSM and SMRF
 
@@ -117,7 +118,8 @@ def parse_config(config_file):
     return apply_and_cast_variables(config)
 
 
-def set_single_day(config, start_date):
+def set_single_day(config: UserConfig, start_date: str) \
+    -> Tuple[UserConfig, pd.Timestamp]:
     """
     Set the start and end date for a single day run
 
@@ -132,7 +134,7 @@ def set_single_day(config, start_date):
     -------
     Tuple of UserConfig and start_date
     """
-    start_date = pd.to_datetime(start_date)
+    start_date = pd.Timestamp(start_date)
     end_date = start_date + DAY_HOURS
 
     config.raw_cfg['time']['start_date'] = start_date.strftime(DATE_TIME_FORMAT)
@@ -142,8 +144,12 @@ def set_single_day(config, start_date):
 
 
 def mod_config(
-    config_file, start_date, no_previous, threshold, medium_threshold
-):
+    config_file: str,
+    start_date: str,
+    no_previous: bool,
+    threshold: bool,
+    medium_threshold: int,
+) -> UserConfig:
     """
     Modify the configuration file to run for a single day
 
@@ -197,9 +203,12 @@ def mod_config(
     return apply_and_cast_variables(config)
 
 
-def run_awsm_daily(config_file):
+def run_awsm_daily(config_file: str):
     """
-    Run each day separately. Calls run_awsm
+    Executes AWSM over a specified date range from the config file.
+
+    Args:
+        config_file: Path to the configuration file.
     """
     config = parse_config(config_file)
 
