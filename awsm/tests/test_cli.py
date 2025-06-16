@@ -126,8 +126,7 @@ class TestModConfig(unittest.TestCase):
             'grid': {},
             'awsm master': {},
         }
-        self.config = MagicMock()
-        self.config.raw_cfg = config
+        self.config = MagicMock(raw_cfg=config)
 
         # Configure mocks
         self.mock_apply_and_cast = mock_apply_and_cast
@@ -136,18 +135,21 @@ class TestModConfig(unittest.TestCase):
     @patch('awsm.cli.parse_config')
     def test_mod_config_no_previous_no_threshold(self, mock_parse_config):
         mock_parse_config.return_value = self.config
+        start_date = '2023-01-03'
+        config_file = '/path/to/config.ini'
 
-        start = pd.Timestamp('2023-01-03 00:00')
-        end = pd.Timestamp('2023-01-03 23:00')
+        start = pd.Timestamp(f'{start_date} 00:00')
+        end = pd.Timestamp(f'{start_date} 23:00')
 
         config = mod_config(
-            self.config,
-            start,
+            config_file,
+            start_date,
             no_previous=True,
             threshold=False,
             medium_threshold=25
         )
 
+        mock_parse_config.assert_called_with(config_file)
         self.assertEqual(
             config.raw_cfg['time']['start_date'],
             start.strftime(DATE_TIME_FORMAT)
@@ -178,13 +180,14 @@ class TestModConfig(unittest.TestCase):
     ):
         mock_parse_config.return_value = self.config
         mock_previous_outputs.return_value = self.config
+        start_date = '2023-01-03'
 
-        start = pd.Timestamp('2023-01-03 00:00')
-        end = pd.Timestamp('2023-01-03 23:00')
+        start = pd.Timestamp(f'{start_date} 00:00')
+        end = pd.Timestamp(f'{start_date} 23:00')
 
         config = mod_config(
-            self.config,
-            start,
+            '/path/to/config.ini',
+            start_date,
             no_previous=False,
             threshold=False,
             medium_threshold=25
@@ -209,13 +212,14 @@ class TestModConfig(unittest.TestCase):
         mock_parse_config.return_value = self.config
         mock_previous_outputs.return_value = self.config
         mock_output_for_date.return_value = '/path/to/previous'
+        start_date = '2023-01-03'
 
-        start = pd.Timestamp('2023-01-03 00:00')
-        end = pd.Timestamp('2023-01-03 23:00')
+        start = pd.Timestamp(f'{start_date} 00:00')
+        end = pd.Timestamp(f'{start_date} 23:00')
 
         config = mod_config(
-            self.config,
-            start,
+            '/path/to/config.ini',
+            start_date,
             no_previous=False,
             threshold=True,
             medium_threshold=25
