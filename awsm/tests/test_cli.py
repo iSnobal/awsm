@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 import pytz
 import os
@@ -244,12 +245,15 @@ class TestRunAwsmDaily(unittest.TestCase):
     def setUp(self, mock_apply_and_cast):
         config = {
             'time': {
-                'start_date': pd.to_datetime('2023-01-01 00:00'),
-                'end_date': pd.to_datetime('2023-01-04 23:00')
+                'start_date': datetime.strptime(
+                    '2023-01-01 00:00', DATE_TIME_FORMAT
+                ),
+                'end_date': datetime.strptime(
+                    '2023-01-04 23:00', DATE_TIME_FORMAT
+                )
             },
         }
-        self.config = MagicMock()
-        self.config.raw_cfg = config
+        self.config = MagicMock(cfg=config)
 
         # Configure mocks
         self.mock_apply_and_cast = mock_apply_and_cast
@@ -262,16 +266,17 @@ class TestRunAwsmDaily(unittest.TestCase):
         self, mock_parse_config, mock_previous_outputs, mock_run_awsm
     ):
         mock_parse_config.return_value = self.config
+        # Return the config parsed as argument
         mock_previous_outputs.side_effect = lambda config, day: config
 
-        run_awsm_daily(self.config)
+        run_awsm_daily('/path/to/config.ini')
 
         assert mock_run_awsm.call_count == 4
         for index, arguments in enumerate(mock_previous_outputs.call_args_list):
             date = arguments[0][1]
             self.assertEqual(
                 date,
-                self.config.raw_cfg['time']['start_date'] + pd.Timedelta(days=index)
+                self.config.cfg['time']['start_date'] + pd.Timedelta(days=index)
             )
 
 class TestParseArguments(unittest.TestCase):

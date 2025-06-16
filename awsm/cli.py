@@ -212,10 +212,10 @@ def run_awsm_daily(config_file: str):
 
     # Days to loop over
     start_day = pd.to_datetime(
-        config.raw_cfg['time']['start_date'].strftime(DATE_FORMAT)
+        config.cfg['time']['start_date'], format=DATE_FORMAT
     )
     end_day = pd.to_datetime(
-        config.raw_cfg['time']['end_date'].strftime(DATE_FORMAT)
+        config.cfg['time']['end_date'], format=DATE_FORMAT
     )
 
     # Daily runs
