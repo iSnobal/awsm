@@ -34,6 +34,8 @@ class AWSM():
     Attributes:
     """
 
+    DATE_FOLDER_FORMAT = "%Y%m%d"
+
     def __init__(self, config, testing=False):
         """
         Initialize the model, read config file, start and end date, and logging
@@ -179,7 +181,8 @@ class AWSM():
                 self.config,
                 self.topo,
                 self.path_output,
-                self.start_date)
+                self.start_date
+            )
 
     @property
     def awsm_config_sections(self):
@@ -265,7 +268,8 @@ class AWSM():
         self.end_wyhr = int(utils.water_day(self.end_date)[0]*24)
 
     def parse_folder_structure(self):
-        """Parse the config to get the folder structure
+        """
+        Parse the config to get the folder structure
 
         Raises:
             ValueError: daily_folders can only be ran with smrf_ipysnobal
@@ -276,12 +280,6 @@ class AWSM():
         else:
             print('No base path to drive given. Exiting now!')
             sys.exit()
-
-        self.basin = self.config['paths']['basin']
-        self.water_year = utils.water_day(self.start_date)[1]
-        self.project_name = self.config['paths']['project_name']
-        self.project_description = self.config['paths']['project_description']
-        self.folder_date_style = self.config['paths']['folder_date_style']
 
         # setting to output in seperate daily folders
         self.daily_folders = self.config['awsm system']['daily_folders']
@@ -363,49 +361,64 @@ class AWSM():
         """
         PySnobal(self).run_ipysnobal()
 
+
+    def basin_path(self):
+        """
+        Returns the path to the basin directory
+        """
+        water_year = utils.water_day(self.start_date)[1]
+
+        return os.path.join(
+            self.path_dr,
+            self.config['paths']['basin'],
+            'wy{}'.format(water_year),
+            self.config['paths']['project_name']
+        )
+
+    def format_folder_date_style(self):
+        """
+        Returns the folder date style
+        """
+        config_value = self.config['paths']['folder_date_style']
+        if config_value == 'day':
+            return self.start_date.strftime(self.DATE_FOLDER_FORMAT)
+
+        elif config_value == 'start_end':
+            return '{}_{}'.format(
+                self.start_date.strftime(self.DATE_FOLDER_FORMAT),
+                self.end_date.strftime(self.DATE_FOLDER_FORMAT)
+            )
+
+        else:
+            raise ValueError(
+                'Unknown folder date style: {}'.format(config_value)
+            )
+
     def mk_directories(self):
         """
         Create all needed directories starting from the working drive
         """
-        # rigid directory work
         self.tmp_log.append('AWSM creating directories')
 
-        # string to append to folders indicatiing run start and end
-        if self.folder_date_style == 'day':
-            self.folder_date_stamp = \
-                '{}'.format(self.start_date.strftime("%Y%m%d"))
+        self.folder_date_stamp = self.format_folder_date_style()
+        self.path_wy = self.basin_path()
 
-        elif self.folder_date_style == 'start_end':
-            self.folder_date_stamp = \
-                '{}_{}'.format(self.start_date.strftime("%Y%m%d"),
-                               self.end_date.strftime("%Y%m%d"))
-
-        # make basin path
-        self.path_wy = os.path.join(
-            self.path_dr,
-            self.basin,
-            'wy{}'.format(self.water_year),
-            self.project_name
-        )
-
-        # all files will now be under one single folder
         self.path_output = os.path.join(
             self.path_wy,
-            'run{}'.format(self.folder_date_stamp))
+            'run{}'.format(self.folder_date_stamp)
+        )
         self.path_log = os.path.join(self.path_output, 'logs')
 
         # name of temporary smrf file to write out
         self.smrfini = os.path.join(self.path_wy, 'tmp_smrf_config.ini')
-        self.forecastini = os.path.join(self.path_wy,
-                                        'tmp_smrf_forecast_config.ini')
-
-        # assign path names for isnobal, path_names_att will be used
-        # to create necessary directories
-        path_names_att = ['path_output', 'path_log']
+        self.forecastini = os.path.join(
+            self.path_wy, 'tmp_smrf_forecast_config.ini'
+        )
 
         # Only start if your drive exists
         if os.path.exists(self.path_dr):
-            self.make_rigid_directories(path_names_att)
+            self.make_directories(self.path_output)
+            self.make_directories(self.path_log)
             self.create_project_description()
 
         else:
@@ -416,41 +429,29 @@ class AWSM():
             sys.exit()
 
     def create_project_description(self):
-        """Create a project description in the base water year directory
         """
-
-        # find where to write file
+        Create a project description in the base water year directory
+        """
         fp_desc = os.path.join(self.path_wy, 'projectDescription.txt')
 
         if not os.path.isfile(fp_desc):
-            # look for description or prompt for one
-            if self.project_description is not None:
-                pass
-            else:
-                self.project_description = input('\nNo description for project. '
-                                                 'Enter one now, but do not use '
-                                                 'any punctuation:\n')
             with open(fp_desc, 'w') as f:
-                f.write(self.project_description)
-
+                f.write(self.config['paths']['project_description'])
         else:
             self.tmp_log.append('Description file already exists\n')
 
-    def make_rigid_directories(self, path_name):
+    def make_directories(self, path_name):
         """
-        Creates rigid directory structure from list of relative bases and
-        extensions from the base
-        """
-        # loop through lists
-        for idp, pn in enumerate(path_name):
-            # get attribute of path
-            path = getattr(self, pn)
+        Creates directory if it does not exist.
 
-            if not os.path.exists(path):
-                os.makedirs(path)
-            else:
-                self.tmp_log.append(
-                    'Directory --{}-- exists, not creating.\n'.format(path))
+        Args:
+            path_name (str): path to the directory to create
+        """
+        if not os.path.exists(path_name):
+            os.makedirs(path_name)
+        else:
+            self.tmp_log.append(
+                'Directory --{}-- exists, not creating.\n'.format(path_name))
 
     def __enter__(self):
         self.start_time = datetime.now()
