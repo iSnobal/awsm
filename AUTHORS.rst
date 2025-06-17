@@ -2,13 +2,9 @@
 Credits
 =======
 
-Development Lead
-----------------
+USDA ARS Contributors
+---------------------
 
-* Micah Sandusky <micah.sandusky@ars.usda.gov>
-
-Contributors
-------------
-
-* Micah Johnson <micah.johnson150@gmail.com>
-
+* Micah Sandusky <https://github.com/micah-prime>
+* Micah Johnson <https://github.com/micahjohnson150>
+* Scott Havens <https://github.com/scotthavens>
