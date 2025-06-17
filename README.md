@@ -29,7 +29,6 @@ awsm -c awsm.ini
 awsm -c awsm.ini -sd 2024-10-01 --threshold
 ```
 
-
 ## Help
 ```bash
 usage: awsm [-h] -c CONFIG_FILE [-sd START_DATE] [-np] [-t] [-mt MEDIUM_THRESHOLD]
@@ -47,7 +46,14 @@ optional arguments:
   -mt MEDIUM_THRESHOLD, --medium_threshold MEDIUM_THRESHOLD
                         Set the medium mass threshold. Default: 25
 ```
-## History
-First used in a publication in the 
-[Geoscientific Model Development](https://gmd.copernicus.org/) journal.  
+
+# Installation
+
+Setting up the model uses the `conda` environment management software.
+A setup follows the steps described in the
+[isnoda instructions](https://github.com/UofU-Cryosphere/isnoda/tree/master/conda)
+
+# History
+First used in a publication in the
+[Geoscientific Model Development](https://gmd.copernicus.org/) journal.
 [![DOI](https://zenodo.org/badge/338433127.svg)](https://zenodo.org/badge/latestdoi/338433127)
