@@ -507,7 +507,8 @@ class PySnobal():
         else:
             self._logger.debug("  => from first time step")
             self.force = self.awsm.smrf_connector.open_netcdf_files()
-            self.time_step = self.date_time[0]
+            # Load and remove the first step so it won't get run by PySnobal
+            self.time_step = self.date_time.pop(0)
             self.input1 = self.get_timestep_inputs()
 
     def run_ipysnobal(self):
@@ -524,7 +525,7 @@ class PySnobal():
 
         self._logger.info(f"Starting PySnobal for {len(self.date_time)} time steps")
 
-        for self.step_index, self.time_step in enumerate(self.date_time[1:], 1):  # noqa
+        for self.step_index, self.time_step in enumerate(self.date_time, 1):
             self.run_full_timestep()
 
             # if input has run_for_nsteps, make sure not to go past it

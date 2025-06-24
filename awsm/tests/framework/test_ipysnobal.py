@@ -128,9 +128,12 @@ class TestPySnobal(AWSMTestCaseLakes):
         ]
         self.subject.awsm.model_init.init_file = None
 
+        assert len(self.subject.date_time) == 1
+
         self.subject.load_first_timestep_inputs()
 
         mock_timestamp.assert_called_once()
+        assert len(self.subject.date_time) == 0
 
     @patch("netCDF4.Dataset")
     @patch.object(awsm.interface.ipysnobal.PySnobal, "get_timestep_inputs")
@@ -142,6 +145,9 @@ class TestPySnobal(AWSMTestCaseLakes):
         ]
         self.subject.awsm.model_init.init_file = MagicMock()
 
+        assert len(self.subject.date_time) == 1
+
         self.subject.load_first_timestep_inputs()
 
         mock_timestamp.assert_called_once()
+        assert len(self.subject.date_time) == 0
