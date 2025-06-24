@@ -44,8 +44,8 @@ class AWSM():
                 instance
         """
 
-        self.read_config(config)
         self.testing = testing
+        self.read_config(config)
 
         # create blank log and error log because logger is not initialized yet
         self.tmp_log = []
@@ -225,7 +225,7 @@ class AWSM():
             print("Errors in the config file. "
                   "See configuration status report above.")
             sys.exit()
-        elif len(warnings) > 0:
+        elif len(warnings) > 0 and not self.testing:
             print_config_report(warnings, errors)
 
         self.config = self.ucfg.cfg
@@ -306,9 +306,9 @@ class AWSM():
             #                      'log_forecast_'
             #                      '{}.out'.format(self.folder_date_stamp))
             # else:
-            logfile = \
-                os.path.join(self.path_log,
-                             'log_{}.out'.format(self.folder_date_stamp))
+            logfile = os.path.join(
+                self.path_log, 'log_{}.out'.format(self.folder_date_stamp)
+            )
 
         self.config['awsm system']['log_file'] = logfile
         logger.SMRFLogger(self.config['awsm system'])
