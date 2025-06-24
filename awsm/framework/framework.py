@@ -394,19 +394,25 @@ class AWSM():
                 'Unknown folder date style: {}'.format(config_value)
             )
 
+    def set_path_output(self):
+        """
+        Set the output path
+        """
+        self.folder_date_stamp = self.format_folder_date_style()
+        self.path_output = os.path.join(
+            self.path_wy,
+            'run{}'.format(self.folder_date_stamp)
+        )
+
+
     def mk_directories(self):
         """
         Create all needed directories starting from the working drive
         """
         self.tmp_log.append('AWSM creating directories')
 
-        self.folder_date_stamp = self.format_folder_date_style()
         self.path_wy = self.basin_path()
-
-        self.path_output = os.path.join(
-            self.path_wy,
-            'run{}'.format(self.folder_date_stamp)
-        )
+        self.set_path_output()
         self.path_log = os.path.join(self.path_output, 'logs')
 
         # name of temporary smrf file to write out
