@@ -31,12 +31,9 @@ class TestPySnobal(AWSMTestCaseLakes):
         self.subject = PySnobal(awsm)
         self.subject.initialize_ipysnobal()
 
-    @patch('netCDF4.Dataset')
-    @patch('awsm.interface.ipysnobal.SMRFConnector')
-    @patch('copy.deepcopy')
-    def test_load_previous_day_attributes(
-        self, mock_copy, mock_smrf, _mock_nc_file
-    ):
+    @patch("awsm.interface.ipysnobal.SMRFConnector")
+    @patch("copy.deepcopy")
+    def test_load_previous_day_attributes(self, mock_copy, mock_smrf):
         awsm_copy = MagicMock()
         mock_copy.return_value = awsm_copy
 
@@ -51,24 +48,28 @@ class TestPySnobal(AWSMTestCaseLakes):
         assert call.set_path_output() in awsm_copy.method_calls
         mock_smrf.assert_called_once_with(awsm_copy)
 
-    @patch.object(awsm.interface.smrf_connector.SMRFConnector, 'get_timestep_netcdf')
-    @patch('netCDF4.Dataset')
+    @patch.object(
+        awsm.interface.smrf_connector.SMRFConnector, "get_timestep_netcdf"
+    )
+    @patch("netCDF4.Dataset")
     def test_load_previous_day_file_loading(self, mock_nc_file, _mock_smrf):
         self.subject.load_previous_day()
         # Grab the last two path elements for each openend file
         opened_files = [
-            '/'.join(file[0][0].rsplit('/', 2)[-2:])
+            "/".join(file[0][0].rsplit("/", 2)[-2:])
             for file in mock_nc_file.call_args_list
         ]
-        previous_day = '20190930'
+        previous_day = "20190930"
 
         for forcing_data in PySnobal.FORCING_VARIABLES:
-            if forcing_data == 'soil_temp':
+            if forcing_data == "soil_temp":
                 # Soil temperature is a constant value, not a file
                 continue
+
             file_path = f"run{previous_day}_{previous_day}/{forcing_data}.nc"
-            assert file_path in opened_files, \
+            assert file_path in opened_files, (
                 f"File {file_path} not found in opened files: {opened_files}"
+            )
 
     @patch("netCDF4.Dataset")
     @patch.object(awsm.interface.ipysnobal.SMRFConnector, "get_timestep_netcdf")
