@@ -70,8 +70,8 @@ class TestPySnobal(AWSMTestCaseLakes):
             assert file_path in opened_files, \
                 f"File {file_path} not found in opened files: {opened_files}"
 
-    @patch('netCDF4.Dataset')
-    @patch.object(awsm.interface.ipysnobal.SMRFConnector, 'get_timestep_netcdf')
+    @patch("netCDF4.Dataset")
+    @patch.object(awsm.interface.ipysnobal.SMRFConnector, "get_timestep_netcdf")
     def test_load_previous_day_data_loading(
         self, mock_smrf_connector, _mock_nc_file
     ):
@@ -85,9 +85,9 @@ class TestPySnobal(AWSMTestCaseLakes):
         )
         assert self.subject.input1 == mock_data
 
-    @patch('netCDF4.Dataset')
-    @patch.object(awsm.interface.ipysnobal.SMRFConnector, 'get_timestep_netcdf')
-    @patch.object(awsm.interface.ipysnobal.PySnobal, 'convert_temperatures')
+    @patch("netCDF4.Dataset")
+    @patch.object(awsm.interface.ipysnobal.SMRFConnector, "get_timestep_netcdf")
+    @patch.object(awsm.interface.ipysnobal.PySnobal, "convert_temperatures")
     def test_load_previous_day_temperature_convert(
         self, mock_temperature, mock_smrf_connector, _mock_nc_file
     ):
@@ -98,15 +98,17 @@ class TestPySnobal(AWSMTestCaseLakes):
 
         mock_temperature.assert_called_once_with(mock_data)
 
-
     @patch('awsm.interface.ipysnobal.SMRFConnector')
     def test_load_previous_day_file_close(self, mock_smrf_connector):
         self.subject.load_previous_day()
 
         assert call().close_netcdf_files() in mock_smrf_connector.mock_calls
 
-    @patch.object(awsm.interface.ipysnobal.PySnobal, 'load_previous_day')
-    def test_load_first_timestep_inputs_previous_day(self, mock_load_day):
+    @patch("netCDF4.Dataset")
+    @patch.object(awsm.interface.ipysnobal.PySnobal, "load_previous_day")
+    def test_load_first_timestep_inputs_previous_day(
+        self, mock_load_day, _mock_nc
+    ):
         self.subject.date_time = [
             pd.Timestamp('2019-10-01 00:00')
         ]
@@ -116,8 +118,11 @@ class TestPySnobal(AWSMTestCaseLakes):
 
         mock_load_day.assert_called_once()
 
-    @patch.object(awsm.interface.ipysnobal.PySnobal, 'get_timestep_inputs')
-    def test_load_first_timestep_inputs_first_timestep(self, mock_timestamp):
+    @patch("netCDF4.Dataset")
+    @patch.object(awsm.interface.ipysnobal.PySnobal, "get_timestep_inputs")
+    def test_load_first_timestep_inputs_first_timestep(
+        self, mock_timestamp, _mock_nc
+    ):
         self.subject.date_time = [
             pd.Timestamp('2019-10-01 00:00')
         ]
@@ -127,8 +132,11 @@ class TestPySnobal(AWSMTestCaseLakes):
 
         mock_timestamp.assert_called_once()
 
-    @patch.object(awsm.interface.ipysnobal.PySnobal, 'get_timestep_inputs')
-    def test_load_first_timestep_inputs_non_zero_hour(self, mock_timestamp):
+    @patch("netCDF4.Dataset")
+    @patch.object(awsm.interface.ipysnobal.PySnobal, "get_timestep_inputs")
+    def test_load_first_timestep_inputs_non_zero_hour(
+        self, mock_timestamp, _mock_nc
+    ):
         self.subject.date_time = [
             pd.Timestamp('2019-10-01 06:00')
         ]

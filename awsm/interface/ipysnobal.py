@@ -502,8 +502,11 @@ class PySnobal():
         ):
             self._logger.debug("  => from previous day")
             self.load_previous_day()
+            # Open the files for all future time steps
+            self.force = self.awsm.smrf_connector.open_netcdf_files()
         else:
             self._logger.debug("  => from first time step")
+            self.force = self.awsm.smrf_connector.open_netcdf_files()
             self.time_step = self.date_time[0]
             self.input1 = self.get_timestep_inputs()
 
@@ -515,7 +518,6 @@ class PySnobal():
         self._logger.info("Initializing PySnobal from netcdf files:")
         self.initialize_ipysnobal()
 
-        self.force = self.awsm.smrf_connector.open_netcdf_files()
         self.load_first_timestep_inputs()
 
         self.initialize_updater()
