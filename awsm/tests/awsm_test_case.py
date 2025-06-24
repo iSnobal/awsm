@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 import unittest
@@ -141,13 +140,6 @@ class AWSMTestCase(unittest.TestCase):
 
     def setUp(self):
         self._dist_variables = None
-
-        # clear the logger
-        for handler in logging.root.handlers:
-            logging.root.removeHandler(handler)
-
-    def tearDown(self):
-        logging.shutdown()
 
     def compare_hrrr_gold(self):
         """
