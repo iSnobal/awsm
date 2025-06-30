@@ -20,15 +20,13 @@ class TestPySnobal(AWSMTestCaseLakes):
     def setUp(self):
         super().setUp()
 
-        config = self.base_config_copy()
+        self.run_config.raw_cfg['time']['start_date'] = '2019-10-01 00:00'
+        self.run_config.raw_cfg['files']['init_type'] = 'netcdf'
 
-        config.raw_cfg['time']['start_date'] = '2019-10-01 00:00'
-        config.raw_cfg['files']['init_type'] = 'netcdf'
-
-        config.apply_recipes()
-        run_config = cast_all_variables(config, config.mcfg)
-        awsm = AWSM(run_config, testing=True)
-        self.subject = PySnobal(awsm)
+        self.run_config.apply_recipes()
+        run_config = cast_all_variables(self.run_config, self.run_config.mcfg)
+        awsm_run = AWSM(run_config, testing=True)
+        self.subject = PySnobal(awsm_run)
         self.subject.initialize_ipysnobal()
 
     @patch("awsm.interface.ipysnobal.SMRFConnector")

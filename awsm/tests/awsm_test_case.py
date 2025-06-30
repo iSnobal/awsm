@@ -56,7 +56,8 @@ class AWSMTestCase(unittest.TestCase):
     @classmethod
     def load_base_config(cls):
         cls._base_config = get_user_config(
-            cls.config_file, modules=['smrf', 'awsm'])
+            cls.config_file, modules=['smrf', 'awsm']
+        )
 
     @classmethod
     def configure(cls):
