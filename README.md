@@ -29,7 +29,6 @@ awsm -c awsm.ini
 awsm -c awsm.ini -sd 2024-10-01 --threshold
 ```
 
-
 ## Help
 ```bash
 usage: awsm [-h] -c CONFIG_FILE [-sd START_DATE] [-np] [-t] [-mt MEDIUM_THRESHOLD]
@@ -47,7 +46,18 @@ optional arguments:
   -mt MEDIUM_THRESHOLD, --medium_threshold MEDIUM_THRESHOLD
                         Set the medium mass threshold. Default: 25
 ```
-## History
-First used in a publication in the 
-[Geoscientific Model Development](https://gmd.copernicus.org/) journal.  
-[![DOI](https://zenodo.org/badge/338433127.svg)](https://zenodo.org/badge/latestdoi/338433127)
+
+# Installation
+
+Setting up the model uses the `conda` environment management software.
+A setup follows the steps described in the
+[isnoda instructions](https://github.com/UofU-Cryosphere/isnoda/tree/master/conda)
+
+# History
+This repo was used in the following publications
+
+* Meyer, J., Horel, J., Kormos, P., Hedrick, A., Trujillo, E., and Skiles, S. M.: Operational water forecast ability of the HRRR-iSnobal combination: an evaluation to adapt into production environments, Geosci. Model Dev., 16, 233–250, https://doi.org/10.5194/gmd-16-233-2023, 2023.
+  Zenodo [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7452230.svg)](https://doi.org/10.5281/zenodo.7452230)
+
+* Meyer, J., Hedrick, A., and McKenzie Skiles, S.: A new approach to net solar radiation in a spatially distributed snow energy balance model to improve snowmelt timing, Journal of Hydrology, 131490, https://doi.org/10.1016/j.jhydrol.2024.131490, 2024.
+  Zenodo [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11245701.svg)](https://doi.org/10.5281/zenodo.11245701)

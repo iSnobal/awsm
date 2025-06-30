@@ -1,0 +1,54 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "setuptools_scm"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "awsm"
+description = "Automated Water Supply Model"
+dynamic = [
+    "version"
+]
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = [
+    "iSnobal",
+    "Snow",
+    "Modeling"
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.9"
+]
+dependencies = [
+    'smrf @ git+https://github.com/UofU-Cryosphere/smrf.git@20250630',
+    'pysnobal @ git+https://github.com/iSnobal/pysnobal.git@20250612',
+]
+
+[project.urls]
+Homepage = "https://github.com/UofU-Cryosphere/awsm"
+
+[project.scripts]
+awsm = "awsm.cli:main"
+
+[project.optional-dependencies]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme"
+]
+all = ["awsm[docs]"]
+
+[tool.setuptools]
+packages = ["awsm"]
+
+[tool.setuptools.package-data]
+awsm = [
+    "framework/CoreConfig.ini",
+    "framework/recipes.ini"
+]
+
+[tool.setuptools_scm]
+local_scheme = "node-and-date"
