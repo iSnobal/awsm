@@ -444,14 +444,16 @@ class PySnobal():
     def output_timestep(self):
         """
         Output the time step if on the right frequency.
+        Uses the hour of the current processed time step and will always
+        save output at midnight (00:00) due to the multiplication by the hour.
+        Also saves the output of the last time step for reinitialization
+        when started the next time.
         """
         out_freq = (
             self.time_step.hour * self.data_time_step / 3600.0
         ) % self.options["output"]["frequency"] == 0
 
-        last_time_step = (
-            self.step_index == len(self.options["time"]["date_time"]) - 1
-        )
+        last_time_step = self.time_step == self.date_time[-1]
 
         if out_freq or last_time_step:
             self._logger.info('iPysnobal outputting {}'.format(self.time_step))

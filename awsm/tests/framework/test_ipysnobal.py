@@ -1,3 +1,4 @@
+from datetime import timedelta
 from unittest.mock import MagicMock, call, patch
 
 import pandas as pd
@@ -150,3 +151,69 @@ class TestPySnobal(AWSMTestCaseLakes):
 
         mock_timestamp.assert_called_once()
         assert len(self.subject.date_time) == 0
+
+    @patch("awsm.interface.ipysnobal.pysnobal_io.output_timestep")
+    def test_output_timestep_24hrs(self, mock_io):
+        self.subject.options["output"]["frequency"] = 24
+        self.subject.date_time = pd.date_range(
+            "2019-10-01 00:00", "2019-10-01 23:00", freq=timedelta(minutes=60)
+        )
+
+        for index, time in enumerate(self.subject.date_time):
+            self.subject.step_index = index
+            self.subject.time_step = time
+            self.subject.output_timestep()
+
+        # First and last time step
+        assert mock_io.call_count == 2
+        assert mock_io.call_args_list[0][0][1] == self.subject.date_time[0]
+        assert mock_io.call_args_list[1][0][1] == self.subject.date_time[-1]
+
+    @patch("awsm.interface.ipysnobal.pysnobal_io.output_timestep")
+    def test_output_timestep_6hrs(self, mock_io):
+        self.subject.options["output"]["frequency"] = 6
+        self.subject.date_time = pd.date_range(
+            "2019-10-01 00:00", "2019-10-01 23:00", freq=timedelta(minutes=60)
+        )
+
+        for index, time in enumerate(self.subject.date_time):
+            self.subject.step_index = index
+            self.subject.time_step = time
+            self.subject.output_timestep()
+
+        assert mock_io.call_count == 5
+        assert mock_io.call_args_list[0][0][1] == self.subject.date_time[0]
+        assert mock_io.call_args_list[1][0][1] == self.subject.date_time[6]
+        assert mock_io.call_args_list[2][0][1] == self.subject.date_time[12]
+        assert mock_io.call_args_list[3][0][1] == self.subject.date_time[18]
+        assert mock_io.call_args_list[4][0][1] == self.subject.date_time[-1]
+
+    @patch("awsm.interface.ipysnobal.pysnobal_io.output_timestep")
+    def test_output_timestep_last_one(self, mock_io):
+        self.subject.options["output"]["frequency"] = 24
+        self.subject.date_time = pd.date_range(
+            "2019-10-01 10:00", "2019-10-01 23:00", freq=timedelta(minutes=60)
+        )
+
+        for index, time in enumerate(self.subject.date_time):
+            self.subject.step_index = index
+            self.subject.time_step = time
+            self.subject.output_timestep()
+
+        assert mock_io.call_count == 1
+        assert mock_io.call_args[0][1] == self.subject.date_time[-1]
+
+    @patch("awsm.interface.ipysnobal.pysnobal_io.output_timestep")
+    def test_output_timestep_first_water_year_day(self, mock_io):
+        self.subject.options["output"]["frequency"] = 24
+        self.subject.date_time = pd.date_range(
+            "2019-10-01 01:00", "2019-10-01 23:00", freq=timedelta(minutes=60)
+        )
+
+        for index, time in enumerate(self.subject.date_time):
+            self.subject.step_index = index
+            self.subject.time_step = time
+            self.subject.output_timestep()
+
+        assert mock_io.call_count == 1
+        assert mock_io.call_args[0][1] == self.subject.date_time[-1]
