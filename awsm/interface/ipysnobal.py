@@ -1,4 +1,3 @@
-import copy
 import logging
 import threading
 from datetime import datetime, timedelta
@@ -38,7 +37,7 @@ def check_range(value, min_val, max_val, descrip):
     pass
 
 
-class PySnobal():
+class PySnobal:
 
     FORCING_VARIABLES = frozenset([
         'thermal',
@@ -471,13 +470,14 @@ class PySnobal():
         Load the last time step from the previous day
         """
         previous_day = self.date_time[0] - timedelta(hours=1)
-        # Copy SMRF connector and set to previous day
-        awsm_previous_day = copy.deepcopy(self.awsm)
-        awsm_previous_day.start_date = previous_day
-        awsm_previous_day.end_date = previous_day
-        awsm_previous_day.set_path_output()
+        # Temporarily set back to the previous day
+        previous_start_date = self.awsm.start_date
+        previous_end_date = self.awsm.end_date
+        self.awsm.start_date = previous_day
+        self.awsm.end_date = previous_day
+        self.awsm.set_path_output()
         # SMRF connector to load previous day data
-        smrf_previous_day = SMRFConnector(awsm_previous_day)
+        smrf_previous_day = SMRFConnector(self.awsm)
         smrf_previous_day.open_netcdf_files()
 
         # Read data
@@ -485,7 +485,11 @@ class PySnobal():
         self.input1 = self.convert_temperatures(self.input1)
 
         smrf_previous_day.close_netcdf_files()
-        del awsm_previous_day, smrf_previous_day
+        del smrf_previous_day
+        # Set back to original dates
+        self.awsm.start_date = previous_start_date
+        self.awsm.end_date = previous_end_date
+        self.awsm.set_path_output()
 
     def load_first_timestep_inputs(self):
         """

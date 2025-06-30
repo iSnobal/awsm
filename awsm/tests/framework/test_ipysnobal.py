@@ -31,21 +31,22 @@ class TestPySnobal(AWSMTestCaseLakes):
         self.subject.initialize_ipysnobal()
 
     @patch("awsm.interface.ipysnobal.SMRFConnector")
-    @patch("copy.deepcopy")
-    def test_load_previous_day_attributes(self, mock_copy, mock_smrf):
-        awsm_copy = MagicMock()
-        mock_copy.return_value = awsm_copy
+    def test_load_previous_day_attributes(self, mock_smrf):
+        start_date = self.subject.awsm.start_date
+        end_date = self.subject.awsm.end_date
+        awsm_mock = MagicMock(
+            start_date=start_date,
+            end_date=end_date,
+        )
+        self.subject.awsm = awsm_mock
 
         self.subject.load_previous_day()
 
-        # Comparing the str here since the AWSM time is created via pandas
-        # date_range and has an 'freq' attribute
-        previous_day = str(pd.Timestamp("2019-09-30 23:00:00+0000"))
-
-        assert str(awsm_copy.start_date) == previous_day
-        assert str(awsm_copy.end_date) == previous_day
-        assert call.set_path_output() in awsm_copy.method_calls
-        mock_smrf.assert_called_once_with(awsm_copy)
+        mock_smrf.assert_called_once_with(self.subject.awsm)
+        assert awsm_mock.start_date == start_date
+        assert awsm_mock.end_date == end_date
+        # One for the previous day and one to set it back
+        assert awsm_mock.method_calls == [call.set_path_output(), call.set_path_output()]
 
     @patch.object(
         awsm.interface.smrf_connector.SMRFConnector, "get_timestep_netcdf"
