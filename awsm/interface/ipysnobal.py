@@ -541,6 +541,10 @@ class PySnobal:
         if self.awsm.forcing_data_type == 'netcdf':
             self.awsm.smrf_connector.close_netcdf_files()
 
+        self.options["output"]["snow"].close()
+        self.options["output"]["em"].close()
+        self._logger.debug("PySnobal finished.")
+
     def run_smrf_ipysnobal(self):
         """
         Function to run SMRF and pass outputs in memory to python wrapped
