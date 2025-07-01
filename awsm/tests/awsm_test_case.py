@@ -167,21 +167,26 @@ class AWSMTestCase(unittest.TestCase):
         # just compare the variable desired with time,x,y
         variables = ['time', 'x', 'y', variable]
         for var_name in variables:
+            # Check attribute existance
+            assert var_name in test.variables, (
+                f"Variable: {var_name} not found in test output file"
+            )
 
             # compare the dimensions
-            for att in gold.variables[var_name].ncattrs():
-                self.assertEqual(
-                    getattr(gold.variables[var_name], att),
-                    getattr(test.variables[var_name], att))
+            self.assertEqual(
+                gold.variables[var_name].ncattrs(),
+                test.variables[var_name].ncattrs(),
+                "Missing variable attribute. "
+                f" Gold: {gold.variables[var_name].ncattrs()}"
+                f" Test: {test.variables[var_name].ncattrs()}",
+            )
 
             # only compare those that are floats
-            if gold.variables[var_name].datatype != np.dtype('S1'):
-                error_msg = "Variable: {0} did not match gold standard". \
-                    format(var_name)
+            if gold.variables[var_name].datatype != np.dtype("S1"):
                 self.assert_gold_equal(
                     gold.variables[var_name][:],
                     test.variables[var_name][:],
-                    error_msg
+                    f"Variable: {var_name} did not match gold standard",
                 )
 
         gold.close()
