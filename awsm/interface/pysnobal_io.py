@@ -55,14 +55,22 @@ def create_netCDF(
 
     # Variables for dimensions
     time = netcdf_file.createVariable(
-        "time", np.float32, DIMENSIONS[0], **COMPRESSION
-    )
-    netcdf_file.createVariable("y", "f4", DIMENSIONS[1], **COMPRESSION)
-    netcdf_file.createVariable("x", "f4", DIMENSIONS[2], **COMPRESSION)
+        "time", "f4", DIMENSIONS[0], **COMPRESSION
+    )  # type: ignore
+    x = netcdf_file.createVariable("y", "f4", DIMENSIONS[1], **COMPRESSION)  # type: ignore
+    y = netcdf_file.createVariable("x", "f4", DIMENSIONS[2], **COMPRESSION)  # type: ignore
 
     time.units = "hours since %s" % start_date.tz_localize(None)
     time.time_zone = str(myawsm.tzinfo).lower()
     time.calendar = "standard"
+
+    y.units = "meters"
+    y.description = "UTM, north south"
+    y.long_name = "y coordinate"
+
+    x.units = "meters"
+    x.description = "UTM, east west"
+    x.long_name = "x coordinate"
 
     netcdf_file.variables["x"][:] = init["x"]
     netcdf_file.variables["y"][:] = init["y"]
