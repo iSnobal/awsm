@@ -70,9 +70,7 @@ def create_netCDF(
     return netcdf_file
 
 
-def create_variables(
-    netcdf_file: nc.Dataset, variables: dict, myawsm
-) -> nc.Dataset:
+def create_variables(netcdf_file: nc.Dataset, variables: dict, myawsm):
     """
     Create NetCDF variables with units and description
 
@@ -84,11 +82,6 @@ def create_variables(
         Variable information. Needs keys for name, units ,and description
     myawsm : AWSM
         AWSM instance
-
-    Returns
-    -------
-    nc.Dataset
-        NetCDF file with added variables
     """
     for index, variable in enumerate(variables["name"]):
         # check to see if in output variables
