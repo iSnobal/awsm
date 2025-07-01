@@ -8,7 +8,7 @@ import numpy as np
 from spatialnc.proj import add_proj
 
 # NetCDF file parameters
-COMPRESSION = dict(zlib=True, complevel=5)
+COMPRESSION = dict(zlib=True, complevel=4)
 DIMENSIONS = ("time", "y", "x")
 
 C_TO_K = 273.16
