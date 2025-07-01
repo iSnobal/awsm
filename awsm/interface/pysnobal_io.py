@@ -1,10 +1,15 @@
 import os
 from copy import copy
 from datetime import datetime
+from pathlib import Path
 
 import netCDF4 as nc
 import numpy as np
 from spatialnc.proj import add_proj
+
+# NetCDF file parameters
+COMPRESSION = dict(zlib=True, complevel=5)
+DIMENSIONS = ("time", "y", "x")
 
 C_TO_K = 273.16
 FREEZE = C_TO_K
@@ -13,6 +18,89 @@ FREEZE = C_TO_K
 # Kelvin to Celsius
 def K_TO_C(x):
     return x - FREEZE
+
+def create_netCDF(
+    filename: Path, start_date: datetime, init: dict, myawsm
+) -> nc.Dataset:
+    """
+    Create a new netCDF output file, removing any existing with the same name.
+    This adds all required dimensions for the file, including x, y, and time.
+
+    Parameters
+    ----------
+    filename : Path
+        Full path of the output file including the name
+    start_date : datetime
+        Start date of written data
+    init : dict
+        X and Y dimensions
+    myawsm : AWSM
+        AWSM instance object
+
+    Returns
+    -------
+    nc.Dataset
+        Create file in open state
+    """
+    if os.path.isfile(filename):
+        myawsm._logger.warning("Removing existing {} file".format(filename))
+        os.remove(filename)
+
+    netcdf_file = nc.Dataset(filename, "w")
+
+    # Create the dimensions
+    netcdf_file.createDimension("time", None)
+    netcdf_file.createDimension("y", len(init["y"]))
+    netcdf_file.createDimension("x", len(init["x"]))
+
+    # Variables for dimensions
+    time = netcdf_file.createVariable(
+        "time", np.float32, DIMENSIONS[0], **COMPRESSION
+    )
+    netcdf_file.createVariable("y", "f4", DIMENSIONS[1], **COMPRESSION)
+    netcdf_file.createVariable("x", "f4", DIMENSIONS[2], **COMPRESSION)
+
+    time.units = "hours since %s" % start_date.tz_localize(None)
+    time.time_zone = str(myawsm.tzinfo).lower()
+    time.calendar = "standard"
+
+    netcdf_file.variables["x"][:] = init["x"]
+    netcdf_file.variables["y"][:] = init["y"]
+
+    return netcdf_file
+
+
+def create_variables(
+    netcdf_file: nc.Dataset, variables: dict, myawsm
+) -> nc.Dataset:
+    """
+    Create NetCDF variables with units and description
+
+    Parameters
+    ----------
+    netcdf_file : nc.Dataset
+        File to add variables to
+    variables : dict
+        Variable information. Needs keys for name, units ,and description
+    myawsm : AWSM
+        AWSM instance
+
+    Returns
+    -------
+    nc.Dataset
+        NetCDF file with added variables
+    """
+    for index, variable in enumerate(variables["name"]):
+        # check to see if in output variables
+        if variable.lower() in myawsm.pysnobal_output_vars:
+            nc_variable = netcdf_file.createVariable(
+                variable,
+                "f4",
+                DIMENSIONS,
+                **COMPRESSION,
+            )
+            nc_variable.units = variables["units"][index]
+            nc_variable.description = variables["description"][index]
 
 
 def output_files(options, init, start_date, myawsm):
@@ -26,192 +114,103 @@ def output_files(options, init, start_date, myawsm):
         myawsm:      awsm class
 
     """
-    fmt = "%Y-%m-%d %H:%M:%S"
-    # chunk size
-    cs = None
-
     # ------------------------------------------------------------------------
     # EM netCDF
-    m = {}
-    m["name"] = [
-        "net_rad",
-        "sensible_heat",
-        "latent_heat",
-        "snow_soil",
-        "precip_advected",
-        "sum_EB",
-        "evaporation",
-        "snowmelt",
-        "SWI",
-        "cold_content",
-    ]
-    m["units"] = [
-        "W m-2",
-        "W m-2",
-        "W m-2",
-        "W m-2",
-        "W m-2",
-        "W m-2",
-        "kg m-2",
-        "kg m-2",
-        "kg or mm m-2",
-        "J m-2",
-    ]
-    m["description"] = [
-        "Average net all-wave radiation",
-        "Average sensible heat transfer",
-        "Average latent heat exchange",
-        "Average snow/soil heat exchange",
-        "Average advected heat from precipitation",
-        "Average sum of EB terms for snowcover",
-        "Total evaporation",
-        "Total snowmelt",
-        "Total runoff",
-        "Snowcover cold content",
-    ]
+    em_variables = {
+        "name": [
+            "net_rad",
+            "sensible_heat",
+            "latent_heat",
+            "snow_soil",
+            "precip_advected",
+            "sum_EB",
+            "evaporation",
+            "snowmelt",
+            "SWI",
+            "cold_content",
+        ],
+        "units": [
+            "W m-2",
+            "W m-2",
+            "W m-2",
+            "W m-2",
+            "W m-2",
+            "W m-2",
+            "kg m-2",
+            "kg m-2",
+            "kg or mm m-2",
+            "J m-2",
+        ],
+        "description": [
+            "Average net all-wave radiation",
+            "Average sensible heat transfer",
+            "Average latent heat exchange",
+            "Average snow/soil heat exchange",
+            "Average advected heat from precipitation",
+            "Average sum of EB terms for snowcover",
+            "Total evaporation",
+            "Total snowmelt",
+            "Total runoff",
+            "Snowcover cold content",
+        ],
+    }
 
-    emname = myawsm.em_name + ".nc"
+    file_path = os.path.join(
+        options["output"]["location"], myawsm.em_name + ".nc"
+    )
+    em = create_netCDF(file_path, start_date, init, myawsm)
+    create_variables(em, em_variables, myawsm)
 
-    netcdfFile = os.path.join(options["output"]["location"], emname)
-
-    if os.path.isfile(netcdfFile):
-        myawsm._logger.warning(
-            "Opening {}, data may be overwritten!".format(netcdfFile)
-        )
-        em = nc.Dataset(netcdfFile, "a")
-        h = "[{}] Data added or updated".format(datetime.now().strftime(fmt))
-        setattr(em, "last_modified", h)
-
-        if "projection" not in em.variables.keys():
-            em = add_proj(em, None, myawsm.topo.topoConfig["filename"])
-
-    else:
-        em = nc.Dataset(netcdfFile, "w")
-
-        dimensions = ("time", "y", "x")
-
-        # create the dimensions
-        em.createDimension("time", None)
-        em.createDimension("y", len(init["y"]))
-        em.createDimension("x", len(init["x"]))
-
-        # create some variables
-        em.createVariable("time", "f", dimensions[0])
-        em.createVariable("y", "f", dimensions[1])
-        em.createVariable("x", "f", dimensions[2])
-
-        setattr(
-            em.variables["time"],
-            "units",
-            "hours since %s" % start_date.tz_localize(None),
-        )
-        setattr(em.variables["time"], "time_zone", str(myawsm.tzinfo).lower())
-        setattr(em.variables["time"], "calendar", "standard")
-        #     setattr(em.variables['time'], 'time_zone', time_zone)
-        em.variables["x"][:] = init["x"]
-        em.variables["y"][:] = init["y"]
-
-        # em image
-        for i, v in enumerate(m["name"]):
-            # check to see if in output variables
-            if v.lower() in myawsm.pysnobal_output_vars:
-                em.createVariable(v, "f", dimensions[:3], chunksizes=cs)
-                setattr(em.variables[v], "units", m["units"][i])
-                setattr(em.variables[v], "description", m["description"][i])
-
-        # add projection info
-        em = add_proj(em, None, myawsm.topo.topoConfig["filename"])
+    em = add_proj(em, None, myawsm.topo.topoConfig["filename"])
 
     options["output"]["em"] = em
 
     # ------------------------------------------------------------------------
     # SNOW netCDF
 
-    s = {}
-    s["name"] = [
-        "thickness",
-        "snow_density",
-        "specific_mass",
-        "liquid_water",
-        "temp_surf",
-        "temp_lower",
-        "temp_snowcover",
-        "thickness_lower",
-        "water_saturation",
-    ]
-    s["units"] = [
-        "m",
-        "kg m-3",
-        "kg m-2",
-        "kg m-2",
-        "C",
-        "C",
-        "C",
-        "m",
-        "percent",
-    ]
-    s["description"] = [
-        "Predicted thickness of the snowcover",
-        "Predicted average snow density",
-        "Predicted specific mass of the snowcover",
-        "Predicted mass of liquid water in the snowcover",
-        "Predicted temperature of the surface layer",
-        "Predicted temperature of the lower layer",
-        "Predicted temperature of the snowcover",
-        "Predicted thickness of the lower layer",
-        "Predicted percentage of liquid water saturation of the snowcover",
-    ]
+    snow_variables = {
+        "name": [
+            "thickness",
+            "snow_density",
+            "specific_mass",
+            "liquid_water",
+            "temp_surf",
+            "temp_lower",
+            "temp_snowcover",
+            "thickness_lower",
+            "water_saturation",
+        ],
+        "units": [
+            "m",
+            "kg m-3",
+            "kg m-2",
+            "kg m-2",
+            "C",
+            "C",
+            "C",
+            "m",
+            "percent",
+        ],
+        "description": [
+            "Predicted thickness of the snowcover",
+            "Predicted average snow density",
+            "Predicted specific mass of the snowcover",
+            "Predicted mass of liquid water in the snowcover",
+            "Predicted temperature of the surface layer",
+            "Predicted temperature of the lower layer",
+            "Predicted temperature of the snowcover",
+            "Predicted thickness of the lower layer",
+            "Predicted percentage of liquid water saturation of the snowcover",
+        ],
+    }
 
-    snowname = myawsm.snow_name + ".nc"
+    file_path = os.path.join(
+        options["output"]["location"], myawsm.snow_name + ".nc"
+    )
+    snow = create_netCDF(file_path, start_date, init, myawsm)
+    create_variables(snow, snow_variables, myawsm)
 
-    netcdfFile = os.path.join(options["output"]["location"], snowname)
-
-    if os.path.isfile(netcdfFile):
-        myawsm._logger.warning(
-            "Opening {}, data may be overwritten!".format(netcdfFile)
-        )
-        snow = nc.Dataset(netcdfFile, "a")
-        h = "[{}] Data added or updated".format(datetime.now().strftime(fmt))
-        setattr(snow, "last_modified", h)
-
-        if "projection" not in snow.variables.keys():
-            snow = add_proj(snow, None, myawsm.topo.topoConfig["filename"])
-
-    else:
-        dimensions = ("time", "y", "x")
-
-        snow = nc.Dataset(netcdfFile, "w")
-
-        # create the dimensions
-        snow.createDimension("time", None)
-        snow.createDimension("y", len(init["y"]))
-        snow.createDimension("x", len(init["x"]))
-
-        # create some variables
-        snow.createVariable("time", "f", dimensions[0])
-        snow.createVariable("y", "f", dimensions[1])
-        snow.createVariable("x", "f", dimensions[2])
-
-        setattr(
-            snow.variables["time"],
-            "units",
-            "hours since %s" % start_date.tz_localize(None),
-        )
-        setattr(snow.variables["time"], "time_zone", str(myawsm.tzinfo).lower())
-        setattr(snow.variables["time"], "calendar", "standard")
-        snow.variables["x"][:] = init["x"]
-        snow.variables["y"][:] = init["y"]
-
-        # snow image
-        for i, v in enumerate(s["name"]):
-            # check to see if in output variables
-            if v.lower() in myawsm.pysnobal_output_vars:
-                snow.createVariable(v, "f", dimensions[:3], chunksizes=cs)
-                setattr(snow.variables[v], "units", s["units"][i])
-                setattr(snow.variables[v], "description", s["description"][i])
-
-        # add projection info
-        snow = add_proj(snow, None, myawsm.topo.topoConfig["filename"])
+    snow = add_proj(snow, None, myawsm.topo.topoConfig["filename"])
 
     options["output"]["snow"] = snow
 
@@ -251,11 +250,10 @@ def output_timestep(s, tstep, options, output_vars):
         "water_saturation": "h2o_sat",
     }
 
-    # preallocate
     em = {}
     snow = {}
 
-    # gather all the data together
+    # Gather all the data together
     for key, value in em_out.items():
         em[key] = copy(s[value])
 
@@ -267,7 +265,6 @@ def output_timestep(s, tstep, options, output_vars):
     snow["temp_surf"] -= FREEZE
     snow["temp_lower"] -= FREEZE
 
-    # the current time integer
     times = options["output"]["snow"].variables["time"]
     # offset to match same convention as iSnobal
     # tstep -= pd.to_timedelta(1, unit='h')                                 # pk commented this out. correct me if i'm wrong 2022 10 19
@@ -282,7 +279,7 @@ def output_timestep(s, tstep, options, output_vars):
     else:
         index = len(times)
 
-    # insert the time
+    # Insert the time
     options["output"]["snow"].variables["time"][index] = t
     options["output"]["em"].variables["time"][index] = t
 
