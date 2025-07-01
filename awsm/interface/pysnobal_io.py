@@ -98,6 +98,7 @@ def create_variables(
                 "f4",
                 DIMENSIONS,
                 **COMPRESSION,
+                least_significant_digit=4,
             )
             nc_variable.units = variables["units"][index]
             nc_variable.description = variables["description"][index]
