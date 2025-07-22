@@ -1,17 +1,17 @@
-
-from pysnobal.c_snobal import snobal
-from datetime import datetime, timedelta
 import logging
+import threading
+from datetime import datetime, timedelta
+
 import numpy as np
-from smrf.framework.model_framework import SMRF
-from smrf.utils import queue
-from pysnobal import ipysnobal
 import pandas as pd
 
-import threading
 from awsm.interface import pysnobal_io
 from awsm.interface.ingest_data import StateUpdater
-
+from awsm.interface.smrf_connector import SMRFConnector
+from pysnobal import ipysnobal
+from pysnobal.c_snobal import snobal
+from smrf.framework.model_framework import SMRF
+from smrf.utils import queue
 
 C_TO_K = 273.16
 FREEZE = C_TO_K
@@ -37,7 +37,7 @@ def check_range(value, min_val, max_val, descrip):
     pass
 
 
-class PySnobal():
+class PySnobal:
 
     FORCING_VARIABLES = frozenset([
         'thermal',
@@ -300,8 +300,27 @@ class PySnobal():
                     self.time_step)
         return data
 
-    def get_timestep_inputs(self):
-        """Get all the forcing variable data from SMRF. Get the data either from
+    @staticmethod
+    def convert_temperatures(data: dict) -> dict:
+        """
+        Convert temperatures in dictionary from Celcius to kelvin
+
+        Args:
+            data : dict
+                Dictionary of forcing varibles
+
+        Returns:
+            Original dictionary with converted temperatures
+        """
+        data['T_a'] = data['T_a'] + FREEZE
+        data['T_pp'] = data['T_pp'] + FREEZE
+        data['T_g'] = data['T_g'] + FREEZE
+
+        return data
+
+    def get_timestep_inputs(self) -> dict:
+        """
+        Get all the forcing variable data from SMRF. Get the data either from
         the netCDF files or from SMRF directly.
 
         Returns:
@@ -320,18 +339,16 @@ class PySnobal():
                 if smrf_data is None:
                     smrf_data = self.init_zeros
                     self._logger.debug(
-                        'No data from smrf to iSnobal for {} in {}'.format(
-                            v['variable'], self.time_step))
+                        "No data from smrf to iSnobal for {} in {}".format(
+                            v["variable"], self.time_step
+                        )
+                    )
 
                 data[self.awsm.smrf_connector.MAP_INPUTS[var]] = smrf_data
 
             data = self._only_for_testing(data)
 
-        data['T_a'] = data['T_a'] + FREEZE
-        data['T_pp'] = data['T_pp'] + FREEZE
-        data['T_g'] = data['T_g'] + FREEZE
-
-        return data
+        return self.convert_temperatures(data)
 
     def set_current_time(self, step_time, time_since_out):
         """Set the current time and time since out
@@ -371,13 +388,13 @@ class PySnobal():
                     self.time_step, rt))
 
     def run_full_timestep(self):
-        """Run the full timestep for iPysnobal. Includes getting the input, 
-        running iPysnobal for the timestep, copying the input data and 
+        """
+        Run the full timestep for iPysnobal. Includes getting the input,
+        running iPysnobal for the timestep, copying the input data and
         outputing the results if needed.
         """
 
-        self._logger.info(
-            'running iPysnobal for timestep: {}'.format(self.time_step))
+        self._logger.info("running iPysnobal for timestep: {}".format(self.time_step))
 
         self.input2 = self.get_timestep_inputs()
 
@@ -390,8 +407,7 @@ class PySnobal():
 
         self.output_timestep()
 
-        self._logger.info(
-            'Finished iPysnobal timestep: {}'.format(self.time_step))
+        self._logger.info("Finished iPysnobal timestep: {}".format(self.time_step))
 
     def smrf_ipysnobal_time_step(self):
         """Run the time step for a `smrf_ipysnobal` simulation
@@ -425,16 +441,20 @@ class PySnobal():
                                .format(telapsed.total_seconds()))
 
     def output_timestep(self):
-        """Output the time step if on the right frequency.
         """
+        Output the time step if on the right frequency.
+        Uses the hour of the current processed time step and will always
+        save output at midnight (00:00) due to the multiplication by the hour.
+        Also saves the output of the last time step for reinitialization
+        when started the next time.
+        """
+        out_freq = (
+            self.time_step.hour * self.data_time_step / 3600.0
+        ) % self.options["output"]["frequency"] == 0
 
-        out_freq = (self.step_index * self.data_time_step /
-                    3600.0) % self.options['output']['frequency'] == 0
-        last_time_step = self.step_index == len(
-            self.options['time']['date_time']) - 1
+        last_time_step = self.time_step == self.date_time[-1]
 
         if out_freq or last_time_step:
-
             self._logger.info('iPysnobal outputting {}'.format(self.time_step))
             pysnobal_io.output_timestep(
                 self.output_rec,
@@ -445,26 +465,71 @@ class PySnobal():
 
             self.output_rec['time_since_out'] = self.init_zeros
 
+    def load_previous_day(self):
+        """
+        Load the last time step from the previous day
+        """
+        previous_day = self.date_time[0] - timedelta(hours=1)
+        # Temporarily set back to the previous day
+        previous_start_date = self.awsm.start_date
+        previous_end_date = self.awsm.end_date
+        self.awsm.start_date = previous_day
+        self.awsm.end_date = previous_day
+        self.awsm.set_path_output()
+        # SMRF connector to load previous day data
+        smrf_previous_day = SMRFConnector(self.awsm)
+        smrf_previous_day.open_netcdf_files()
+
+        # Read data
+        self.input1 = smrf_previous_day.get_timestep_netcdf(previous_day)
+        self.input1 = self.convert_temperatures(self.input1)
+
+        smrf_previous_day.close_netcdf_files()
+        del smrf_previous_day
+        # Set back to original dates
+        self.awsm.start_date = previous_start_date
+        self.awsm.end_date = previous_end_date
+        self.awsm.set_path_output()
+
+    def load_first_timestep_inputs(self):
+        """
+        When run on the first day of the simulation year (10/01), take the 0
+        hour as the initial hour. Other cases include starting on a non-zero
+        hour. When starting on the zero hour during the simulation year, look
+        back to the previous day.
+        """
+        self._logger.info("  * Getting inputs for first timestep")
+
+        if (
+            self.date_time[0].hour == 0 and
+            self.awsm.model_init.init_file is not None
+        ):
+            self._logger.debug("  => from previous day")
+            self.load_previous_day()
+            # Open the files for all future time steps
+            self.force = self.awsm.smrf_connector.open_netcdf_files()
+        else:
+            self._logger.debug("  => from first time step")
+            self.force = self.awsm.smrf_connector.open_netcdf_files()
+            # Load and remove the first step so it won't get run by PySnobal
+            self.time_step = self.date_time.pop(0)
+            self.input1 = self.get_timestep_inputs()
+
     def run_ipysnobal(self):
         """
-        Function to run PySnobal from netcdf forcing data,
-        not from SMRF instance.
+        Function to run PySnobal from netcdf forcing data.
         """
 
-        self._logger.info('Initializing PySnobal from netcdf files')
+        self._logger.info("Initializing PySnobal from netcdf files:")
         self.initialize_ipysnobal()
 
-        self._logger.info('getting inputs for first timestep')
-
-        self.force = self.awsm.smrf_connector.open_netcdf_files()
-        self.time_step = self.date_time[0]
-        self.input1 = self.get_timestep_inputs()
+        self.load_first_timestep_inputs()
 
         self.initialize_updater()
 
-        self._logger.info('starting PySnobal time series loop')
+        self._logger.info(f"Starting PySnobal for {len(self.date_time)} time steps")
 
-        for self.step_index, self.time_step in enumerate(self.date_time[1:], 1):  # noqa
+        for self.step_index, self.time_step in enumerate(self.date_time, 1):
             self.run_full_timestep()
 
             # if input has run_for_nsteps, make sure not to go past it
@@ -475,6 +540,10 @@ class PySnobal():
         # close input files
         if self.awsm.forcing_data_type == 'netcdf':
             self.awsm.smrf_connector.close_netcdf_files()
+
+        self.options["output"]["snow"].close()
+        self.options["output"]["em"].close()
+        self._logger.debug("PySnobal finished.")
 
     def run_smrf_ipysnobal(self):
         """

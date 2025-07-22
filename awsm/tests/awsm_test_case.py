@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 import unittest
@@ -57,7 +56,8 @@ class AWSMTestCase(unittest.TestCase):
     @classmethod
     def load_base_config(cls):
         cls._base_config = get_user_config(
-            cls.config_file, modules=['smrf', 'awsm'])
+            cls.config_file, modules=['smrf', 'awsm']
+        )
 
     @classmethod
     def configure(cls):
@@ -142,13 +142,6 @@ class AWSMTestCase(unittest.TestCase):
     def setUp(self):
         self._dist_variables = None
 
-        # clear the logger
-        for handler in logging.root.handlers:
-            logging.root.removeHandler(handler)
-
-    def tearDown(self):
-        logging.shutdown()
-
     def compare_hrrr_gold(self):
         """
         Compare the model results with the gold standard
@@ -174,21 +167,26 @@ class AWSMTestCase(unittest.TestCase):
         # just compare the variable desired with time,x,y
         variables = ['time', 'x', 'y', variable]
         for var_name in variables:
+            # Check attribute existance
+            assert var_name in test.variables, (
+                f"Variable: {var_name} not found in test output file"
+            )
 
             # compare the dimensions
-            for att in gold.variables[var_name].ncattrs():
-                self.assertEqual(
-                    getattr(gold.variables[var_name], att),
-                    getattr(test.variables[var_name], att))
+            self.assertEqual(
+                gold.variables[var_name].ncattrs(),
+                test.variables[var_name].ncattrs(),
+                "Missing variable attribute. "
+                f" Gold: {gold.variables[var_name].ncattrs()}"
+                f" Test: {test.variables[var_name].ncattrs()}",
+            )
 
             # only compare those that are floats
-            if gold.variables[var_name].datatype != np.dtype('S1'):
-                error_msg = "Variable: {0} did not match gold standard". \
-                    format(var_name)
+            if gold.variables[var_name].datatype != np.dtype("S1"):
                 self.assert_gold_equal(
                     gold.variables[var_name][:],
                     test.variables[var_name][:],
-                    error_msg
+                    f"Variable: {var_name} did not match gold standard",
                 )
 
         gold.close()

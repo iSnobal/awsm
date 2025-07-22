@@ -86,14 +86,17 @@ class SMRFConnector():
 
         self.force = {}
         for variable in self.MAP_INPUTS.keys():
-            try:
-                self.force[variable] = nc.Dataset(
-                    os.path.join(self.output_path, '{}.nc'.format(variable)),
-                    'r')
 
-            except FileNotFoundError:
+            # Soil temperature is a constant value defined in the .ini file
+            if variable == 'soil_temp':
                 self.force['soil_temp'] = float(self.myawsm.soil_temp) * \
                     np.ones_like(self.myawsm.topo.dem)
+                continue
+
+            self.force[variable] = nc.Dataset(
+                os.path.join(self.output_path, '{}.nc'.format(variable)),
+                'r'
+            )
 
     def close_netcdf_files(self):
         """
@@ -110,7 +113,6 @@ class SMRFConnector():
         place that time step into a dict
 
         Args:
-            force:   input array of forcing variables
             tstep:   datetime time step
 
         Returns:
