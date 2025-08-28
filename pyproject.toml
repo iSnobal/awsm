@@ -52,3 +52,4 @@ awsm = [
 
 [tool.setuptools_scm]
 local_scheme = "node-and-date"
+write_to = "awsm/version.py"
