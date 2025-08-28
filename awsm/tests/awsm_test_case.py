@@ -101,44 +101,6 @@ class AWSMTestCase(unittest.TestCase):
 
         return config
 
-    @staticmethod
-    def assert_gold_equal(gold, not_gold, error_msg):
-        """Compare two arrays
-        Arguments:
-            gold {array} -- gold array
-            not_gold {array} -- not gold array
-            error_msg {str} -- error message to display
-        """
-
-        if os.getenv('NOT_ON_GOLD_HOST') is None:
-            try:
-                np.testing.assert_array_equal(
-                    not_gold,
-                    gold,
-                    err_msg=error_msg
-                )
-            except AssertionError:
-                for rtol in [1e-5, 1e-4]:
-                    status = np.allclose(
-                        not_gold,
-                        gold,
-                        atol=0,
-                        rtol=rtol
-                    )
-                    if status:
-                        break
-                if not status:
-                    raise AssertionError(error_msg)
-                print('Arrays are not exact match but close with rtol={}'.format(rtol))  # noqa
-        else:
-            np.testing.assert_allclose(
-                not_gold,
-                gold,
-                atol=0,
-                rtol=0.01,
-                err_msg=error_msg
-            )
-
     def setUp(self):
         self._dist_variables = None
 
@@ -167,27 +129,41 @@ class AWSMTestCase(unittest.TestCase):
         # just compare the variable desired with time,x,y
         variables = ['time', 'x', 'y', variable]
         for var_name in variables:
-            # Check attribute existance
+            # Check attribute existence
             assert var_name in test.variables, (
                 f"Variable: {var_name} not found in test output file"
             )
 
-            # compare the dimensions
-            self.assertEqual(
-                gold.variables[var_name].ncattrs(),
-                test.variables[var_name].ncattrs(),
+            # Compare the dimensions of gold are still in the tests
+            # The test will have 'description' and 'long_name' additionally
+            self.assertTrue(
+                np.all(
+                    np.isin(
+                        gold.variables[var_name].ncattrs(),
+                        test.variables[var_name].ncattrs(),
+                    )
+                ),
                 "Missing variable attribute. "
                 f" Gold: {gold.variables[var_name].ncattrs()}"
                 f" Test: {test.variables[var_name].ncattrs()}",
             )
 
-            # only compare those that are floats
-            if gold.variables[var_name].datatype != np.dtype("S1"):
-                self.assert_gold_equal(
-                    gold.variables[var_name][:],
-                    test.variables[var_name][:],
-                    f"Variable: {var_name} did not match gold standard",
-                )
+            # Note: With the change to only store four significant digits for
+            #       SMRF outputs, the test files started to deviate a lot more
+            #       to current gold files through propagation of floating point
+            #       differences. This bumped the atol and rtol values up. SMRF PR#10
+            rtol = 0.015
+            if var_name == "cold_content":
+                # Cold content was the only variable that showed higher magnitude
+                rtol = 0.04
+
+            np.testing.assert_allclose(
+                gold.variables[var_name][:],
+                test.variables[var_name][:],
+                atol=0.01,
+                rtol=rtol,
+                err_msg=f"Variable: {var_name} did not match gold standard",
+            )
 
         gold.close()
         test.close()
