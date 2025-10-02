@@ -80,30 +80,6 @@ class PySnobal:
     def init_ones(self):
         return np.ones_like(self.awsm.topo.dem)
 
-    def _only_for_testing(self, data):
-        """Only apply this in testing. This is to ensure that run_ipysnobal
-        and run_smrf_ipysnobal are producing the same results. The issues
-        stems from netcdf files storing 32-bit floats but smrf_ipysnobal
-        uses 64-bit floats from SMRF.
-
-        Not intended for use outside testing!
-
-        Args:
-            data (dict): data dictionary
-
-        Returns:
-            dict: data dictionary that has be "written and extracted" from
-                a netcdf file
-        """
-
-        if self.awsm.testing:
-            for key, value in data.items():
-                value = value.astype(np.float32)
-                value = value.astype(np.float64)
-                data[key] = value
-
-        return data
-
     def initialize_updater(self):
         """
         Initialize the StateUpdater for the simulation
