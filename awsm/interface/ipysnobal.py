@@ -103,26 +103,25 @@ class PySnobal:
         self.get_args()
 
         # get the time step info
-        self.params, self.time_step_info = ipysnobal.get_tstep_info(
+        self.params, self.time_step_info = ipysnobal.get_timestep_info(
             self.options["constants"], self.options
         )
 
         # mass thresholds for run time steps
-        self.time_step_info[ipysnobal.NORMAL_TSTEP]["threshold"] = (
+        self.time_step_info[ipysnobal.NORMAL_TIMESTEP]["threshold"] = (
             self.awsm.mass_thresh[0]
         )
-        self.time_step_info[ipysnobal.MEDIUM_TSTEP]["threshold"] = (
+        self.time_step_info[ipysnobal.MEDIUM_TIMESTEP]["threshold"] = (
             self.awsm.mass_thresh[1]
         )
-        self.time_step_info[ipysnobal.SMALL_TSTEP]["threshold"] = (
+        self.time_step_info[ipysnobal.SMALL_TIMESTEP]["threshold"] = (
             self.awsm.mass_thresh[2]
         )
 
         # get init params
         self.init = self.awsm.model_init.init
 
-        self.output_rec = ipysnobal.initialize(
-            self.params, self.time_step_info, self.init
+        self.output_rec = ipysnobal.initialize(self.init
         )
 
         # create the output files
