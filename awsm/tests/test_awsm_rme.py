@@ -5,7 +5,7 @@ from awsm.framework.framework import run_awsm
 from awsm.tests.awsm_test_case import AWSMTestCase
 
 
-class TestStandardRME(AWSMTestCase):
+class TestRME(AWSMTestCase):
     """
     Testing using RME:
         - ipysnobal
@@ -80,23 +80,4 @@ class TestStandardRME(AWSMTestCase):
         self.compare_netcdf_files('em.nc', 'SWI')
 
     def test_cold_content(self):
-        self.compare_netcdf_files('em.nc', 'cold_content')
-
-
-class TestRMESMRFiPysnobal(TestStandardRME):
-    """
-    Testing using RME:
-        - smrf_ipysnobal
-        - initialize with all zeros
-        - loading from netcdf
-    """
-
-    @classmethod
-    def configure(cls):
-        config = cls.base_config_copy()
-        config.raw_cfg['awsm master']['run_smrf'] = False
-        config.raw_cfg['awsm master']['model_type'] = 'smrf_ipysnobal'
-        config.raw_cfg['system']['threading'] = False
-
-        config.apply_recipes()
-        cls.run_config = cast_all_variables(config, config.mcfg)
+        self.compare_netcdf_files("em.nc", "cold_content")

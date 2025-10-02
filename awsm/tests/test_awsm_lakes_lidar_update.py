@@ -111,32 +111,4 @@ class TestLakesLidarUpdate(AWSMTestCaseLakes):
         self.compare_netcdf_files('model_lidar_change.nc', 'rho_change')
 
     def test_model_change_swe(self):
-        self.compare_netcdf_files('model_lidar_change.nc', 'swe_change')
-
-
-class TestLakesLidarUpdateSMRFiPysnobal(TestLakesLidarUpdate):
-    """
-    Testing using Lakes:
-        - smrf_ipysnobal
-        - initialize from snow.nc
-        - lidar updates
-    """
-
-    @classmethod
-    def configure(cls):
-        config = cls.base_config_copy()
-        config.raw_cfg['awsm master']['run_smrf'] = False
-        config.raw_cfg['awsm master']['model_type'] = 'smrf_ipysnobal'
-        config.raw_cfg['system']['threading'] = False
-        adj_config = {
-            'update depth': {
-                'update': True,
-                'update_file': './topo/lidar_depths.nc',
-                'buffer': 400,
-                'flight_numbers': 1,
-                'update_change_file': 'output/lakes/wy2020/lakes_gold/run20191001_20191001/model_lidar_change.nc'  # noqa
-            },
-        }
-        config.raw_cfg.update(adj_config)
-        config.apply_recipes()
-        cls.run_config = cast_all_variables(config, config.mcfg)
+        self.compare_netcdf_files("model_lidar_change.nc", "swe_change")

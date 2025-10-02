@@ -18,20 +18,17 @@ class AWSMTestCase(unittest.TestCase):
     directory upon tear down.
     Runs the short simulation over reynolds mountain east
     """
-    DIST_VARIABLES = frozenset([
-        'air_temp',
-        'cloud_factor',
-        'precip',
-        'thermal',
-        'vapor_pressure',
-        'wind',
-    ])
 
-    THREAD_CONFIG = {
-        'threading': True,
-        'max_queue': 1,
-        'time_out': 5
-    }
+    DIST_VARIABLES = frozenset(
+        [
+            "air_temp",
+            "cloud_factor",
+            "precip",
+            "thermal",
+            "vapor_pressure",
+            "wind",
+        ]
+    )
 
     BASE_INI_FILE_NAME = 'config.ini'
 
@@ -90,16 +87,6 @@ class AWSMTestCase(unittest.TestCase):
         if hasattr(cls, 'output_dir') and \
                 os.path.exists(cls.output_dir):
             shutil.rmtree(cls.output_dir)
-
-    @classmethod
-    def thread_config(cls):
-        config = cls.base_config_copy()
-        config.raw_cfg['system'].update(cls.THREAD_CONFIG)
-
-        config.apply_recipes()
-        config = cast_all_variables(config, config.mcfg)
-
-        return config
 
     def setUp(self):
         self._dist_variables = None

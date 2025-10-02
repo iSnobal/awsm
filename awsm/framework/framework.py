@@ -89,13 +89,6 @@ class AWSM():
             #     print(self.tmp_err)
             #     sys.exit()
 
-            if self.config['system']['threading']:
-                # Can't run threaded smrf if running forecast_data
-                self.tmp_err.append('Cannot run SMRF threaded with'
-                                    ' gridded input data')
-                print(self.tmp_err)
-                sys.exit()
-
         # Time step mass thresholds for iSnobal
         self.mass_thresh = []
         self.mass_thresh.append(self.config['grid']['thresh_normal'])
@@ -129,13 +122,10 @@ class AWSM():
         # iSnobal active layer
         self.active_layer = self.config['grid']['active_layer']
 
-        # if we are going to run ipysnobal with smrf
-        if self.model_type in ['ipysnobal', 'smrf_ipysnobal']:
-            self.ipy_threads = self.ithreads
-            self.ipy_init_type = \
-                self.config['files']['init_type']
-            self.forcing_data_type = \
-                self.config['ipysnobal']['forcing_data_type']
+        # ipysnobal parameters
+        self.ipy_threads = self.ithreads
+        self.ipy_init_type = self.config["files"]["init_type"]
+        self.forcing_data_type = self.config["ipysnobal"]["forcing_data_type"]
 
         # parameters needed for restart procedure
         self.restart_run = False
@@ -337,30 +327,11 @@ class AWSM():
 
         self.smrf_connector.run_smrf()
 
-    def run_smrf_ipysnobal(self):
-        """
-        Run smrf and pass inputs to ipysnobal in memory.
-        """
-
-        PySnobal(self).run_smrf_ipysnobal()
-        # smrf_ipy.run_smrf_ipysnobal(self)
-
-    # def run_awsm_daily(self):
-    #     """
-    #     This function runs
-    #     :mod:`awsm.interface.smrf_ipysnobal.run_smrf_ipysnobal` on an
-    #     hourly output from Pysnobal, outputting to daily folders, similar
-    #     to the HRRR froecast.
-    #     """
-
-    #     smin.run_awsm_daily(self)
-
     def run_ipysnobal(self):
         """
         Run PySnobal from previously run smrf forcing data
         """
         PySnobal(self).run_ipysnobal()
-
 
     def basin_path(self):
         """
@@ -485,26 +456,8 @@ def run_awsm(config, testing=False):
             netcdf. This enables a single set of gold files.
     """
     with AWSM(config, testing) as a:
-        if a.do_forecast:
-            runtype = 'forecast'
-        else:
-            runtype = 'smrf'
+        if a.do_smrf:
+            a.run_smrf()
 
-        if not a.config['isnobal restart']['restart_crash']:
-            if a.do_smrf:
-                a.run_smrf()
-
-            if a.model_type == 'ipysnobal':
-                a.run_ipysnobal()
-
-        # if restart
-        else:
-            if a.model_type == 'ipysnobal':
-                a.run_ipysnobal()
-
-        # Run iPySnobal from SMRF in memory
-        if a.model_type == 'smrf_ipysnobal':
-            if a.daily_folders:
-                a.run_awsm_daily()
-            else:
-                a.run_smrf_ipysnobal()
+        if a.model_type == "ipysnobal":
+            a.run_ipysnobal()

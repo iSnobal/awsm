@@ -90,26 +90,4 @@ class TestLakesInit(AWSMTestCaseLakes):
         self.compare_netcdf_files('em.nc', 'SWI')
 
     def test_cold_content(self):
-        self.compare_netcdf_files('em.nc', 'cold_content')
-
-
-class TestLakesInitSMRFiPysnobal(TestLakesInit):
-    """
-    Testing using Lakes:
-        - smrf_ipysnobal
-        - initialize from init.nc file
-        - loading from netcdf
-    """
-
-    @classmethod
-    def configure(cls):
-
-        config = cls.base_config_copy()
-        config.raw_cfg['awsm master']['run_smrf'] = False
-        config.raw_cfg['awsm master']['model_type'] = 'smrf_ipysnobal'
-        config.raw_cfg['system']['threading'] = False
-        config.raw_cfg['files']['init_file'] = './topo/init.nc'
-        config.raw_cfg['files']['init_type'] = 'netcdf'
-
-        config.apply_recipes()
-        cls.run_config = cast_all_variables(config, config.mcfg)
+        self.compare_netcdf_files("em.nc", "cold_content")

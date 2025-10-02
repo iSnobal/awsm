@@ -4,7 +4,7 @@ from awsm.framework.framework import run_awsm
 from awsm.tests.awsm_test_case_lakes import AWSMTestCaseLakes
 
 
-class TestStandardLakes(AWSMTestCaseLakes):
+class TestLakes(AWSMTestCaseLakes):
     """
     Testing using Lakes:
         - ipysnobal
@@ -79,23 +79,4 @@ class TestStandardLakes(AWSMTestCaseLakes):
         self.compare_netcdf_files('em.nc', 'SWI')
 
     def test_cold_content(self):
-        self.compare_netcdf_files('em.nc', 'cold_content')
-
-
-class TestLakesSMRFiPysnobal(TestStandardLakes):
-    """
-    Testing using Lakes:
-        - smrf_ipysnobal
-        - initialize from snow.nc file
-        - loading from netcdf
-    """
-
-    @classmethod
-    def configure(cls):
-        config = cls.base_config_copy()
-        config.raw_cfg['awsm master']['run_smrf'] = False
-        config.raw_cfg['awsm master']['model_type'] = 'smrf_ipysnobal'
-        config.raw_cfg['system']['threading'] = False
-
-        config.apply_recipes()
-        cls.run_config = cast_all_variables(config, config.mcfg)
+        self.compare_netcdf_files("em.nc", "cold_content")
