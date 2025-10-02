@@ -6,7 +6,7 @@ from pathlib import Path
 
 import netCDF4 as nc
 import numpy as np
-from inicheck.tools import cast_all_variables, get_user_config
+from inicheck.tools import get_user_config
 
 import awsm
 
@@ -18,25 +18,22 @@ class AWSMTestCase(unittest.TestCase):
     directory upon tear down.
     Runs the short simulation over reynolds mountain east
     """
-    DIST_VARIABLES = frozenset([
-        'air_temp',
-        'cloud_factor',
-        'precip',
-        'thermal',
-        'vapor_pressure',
-        'wind',
-    ])
 
-    THREAD_CONFIG = {
-        'threading': True,
-        'max_queue': 1,
-        'time_out': 5
-    }
+    DIST_VARIABLES = frozenset(
+        [
+            "air_temp",
+            "cloud_factor",
+            "precip",
+            "thermal",
+            "vapor_pressure",
+            "wind",
+        ]
+    )
 
-    BASE_INI_FILE_NAME = 'config.ini'
+    BASE_INI_FILE_NAME = "config.ini"
 
-    test_dir = Path(awsm.__file__).parent.joinpath('tests')
-    basin_dir = test_dir.joinpath('basins', 'RME')
+    test_dir = Path(awsm.__file__).parent.joinpath("tests")
+    basin_dir = test_dir.joinpath("basins", "RME")
     config_file = os.path.join(basin_dir, BASE_INI_FILE_NAME)
 
     @property
@@ -55,9 +52,7 @@ class AWSMTestCase(unittest.TestCase):
 
     @classmethod
     def load_base_config(cls):
-        cls._base_config = get_user_config(
-            cls.config_file, modules=['smrf', 'awsm']
-        )
+        cls._base_config = get_user_config(cls.config_file, modules=["smrf", "awsm"])
 
     @classmethod
     def configure(cls):
@@ -72,11 +67,11 @@ class AWSMTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.remove_output_dir()
-        delattr(cls, 'output_dir')
+        delattr(cls, "output_dir")
 
     @classmethod
     def create_output_dir(cls):
-        folder = os.path.join(cls._base_config.cfg['paths']['path_dr'])
+        folder = os.path.join(cls._base_config.cfg["paths"]["path_dr"])
 
         # Remove any potential files to ensure fresh run
         if os.path.isdir(folder):
@@ -87,19 +82,8 @@ class AWSMTestCase(unittest.TestCase):
 
     @classmethod
     def remove_output_dir(cls):
-        if hasattr(cls, 'output_dir') and \
-                os.path.exists(cls.output_dir):
+        if hasattr(cls, "output_dir") and os.path.exists(cls.output_dir):
             shutil.rmtree(cls.output_dir)
-
-    @classmethod
-    def thread_config(cls):
-        config = cls.base_config_copy()
-        config.raw_cfg['system'].update(cls.THREAD_CONFIG)
-
-        config.apply_recipes()
-        config = cast_all_variables(config, config.mcfg)
-
-        return config
 
     def setUp(self):
         self._dist_variables = None
@@ -110,7 +94,7 @@ class AWSMTestCase(unittest.TestCase):
         """
         [
             self.compare_netcdf_files(file_name.name)
-            for file_name in self.gold_dir.glob('*.nc')
+            for file_name in self.gold_dir.glob("*.nc")
         ]
 
     def compare_netcdf_files(self, output_file, variable):
@@ -127,7 +111,7 @@ class AWSMTestCase(unittest.TestCase):
         test.set_always_mask(False)
 
         # just compare the variable desired with time,x,y
-        variables = ['time', 'x', 'y', variable]
+        variables = ["time", "x", "y", variable]
         for var_name in variables:
             # Check attribute existence
             assert var_name in test.variables, (
