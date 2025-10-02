@@ -1,4 +1,3 @@
-import copy
 import logging
 import os
 import sys
@@ -23,7 +22,7 @@ from awsm.interface.smrf_connector import SMRFConnector
 from awsm.interface.ipysnobal import PySnobal
 
 
-class AWSM():
+class AWSM:
     """
     Args:
         configFile (str):  path to configuration file.
@@ -58,13 +57,13 @@ class AWSM():
         self.create_log()
 
         # ################## Decide which modules to run #####################
-        self.do_smrf = self.config['awsm master']['run_smrf']
-        self.model_type = self.config['awsm master']['model_type']
+        self.do_smrf = self.config["awsm master"]["run_smrf"]
+        self.model_type = self.config["awsm master"]["model_type"]
         # self.do_smrf_ipysnobal = \
         #     self.config['awsm master']['run_smrf_ipysnobal']
         # self.do_ipysnobal = self.config['awsm master']['run_ipysnobal']
         self.do_forecast = False
-        if 'gridded' in self.config and self.do_smrf:
+        if "gridded" in self.config and self.do_smrf:
             # self.do_forecast = self.config['gridded']['hrrr_forecast_flag']
 
             # WARNING: The value here is inferred in SMRF.data.loadGrid. A
@@ -72,13 +71,13 @@ class AWSM():
             self.n_forecast_hours = 18
 
         # options for masking isnobal
-        self.mask_isnobal = self.config['awsm master']['mask_isnobal']
+        self.mask_isnobal = self.config["awsm master"]["mask_isnobal"]
 
         # store smrf version if running smrf
         self.smrf_version = smrf.__version__
 
         if self.do_forecast:
-            self.tmp_log.append('Forecasting set to True')
+            self.tmp_log.append("Forecasting set to True")
 
             # self.fp_forecastdata = self.config['gridded']['wrf_file']
             # if self.fp_forecastdata is None:
@@ -91,36 +90,34 @@ class AWSM():
 
         # Time step mass thresholds for iSnobal
         self.mass_thresh = []
-        self.mass_thresh.append(self.config['grid']['thresh_normal'])
-        self.mass_thresh.append(self.config['grid']['thresh_medium'])
-        self.mass_thresh.append(self.config['grid']['thresh_small'])
+        self.mass_thresh.append(self.config["grid"]["thresh_normal"])
+        self.mass_thresh.append(self.config["grid"]["thresh_medium"])
+        self.mass_thresh.append(self.config["grid"]["thresh_small"])
 
         # threads for running iSnobal
-        self.ithreads = self.config['awsm system']['ithreads']
+        self.ithreads = self.config["awsm system"]["ithreads"]
         # how often to output form iSnobal
-        self.output_freq = self.config['awsm system']['output_frequency']
+        self.output_freq = self.config["awsm system"]["output_frequency"]
         # number of timesteps to run if ou don't want to run the whole thing
-        self.run_for_nsteps = self.config['awsm system']['run_for_nsteps']
+        self.run_for_nsteps = self.config["awsm system"]["run_for_nsteps"]
         # pysnobal output variables
-        self.pysnobal_output_vars = self.config['awsm system']['variables']
-        self.pysnobal_output_vars = [wrd.lower()
-                                     for wrd in self.pysnobal_output_vars]
+        self.pysnobal_output_vars = self.config["awsm system"]["variables"]
+        self.pysnobal_output_vars = [wrd.lower() for wrd in self.pysnobal_output_vars]
         # snow and emname
-        self.snow_name = self.config['awsm system']['snow_name']
-        self.em_name = self.config['awsm system']['em_name']
+        self.snow_name = self.config["awsm system"]["snow_name"]
+        self.em_name = self.config["awsm system"]["em_name"]
 
         # options for restarting iSnobal
         self.restart_crash = False
-        if self.config['isnobal restart']['restart_crash']:
+        if self.config["isnobal restart"]["restart_crash"]:
             self.restart_crash = True
             # self.new_init = self.config['isnobal restart']['new_init']
-            self.depth_thresh = self.config['isnobal restart']['depth_thresh']
-            self.restart_hr = \
-                int(self.config['isnobal restart']['wyh_restart_output'])
-            self.restart_folder = self.config['isnobal restart']['output_folders']
+            self.depth_thresh = self.config["isnobal restart"]["depth_thresh"]
+            self.restart_hr = int(self.config["isnobal restart"]["wyh_restart_output"])
+            self.restart_folder = self.config["isnobal restart"]["output_folders"]
 
         # iSnobal active layer
-        self.active_layer = self.config['grid']['active_layer']
+        self.active_layer = self.config["grid"]["active_layer"]
 
         # ipysnobal parameters
         self.ipy_threads = self.ithreads
@@ -129,35 +126,36 @@ class AWSM():
 
         # parameters needed for restart procedure
         self.restart_run = False
-        if self.config['isnobal restart']['restart_crash']:
+        if self.config["isnobal restart"]["restart_crash"]:
             self.restart_run = True
             # find restart hour datetime
-            reset_offset = pd.to_timedelta(self.restart_hr, unit='h')
+            reset_offset = pd.to_timedelta(self.restart_hr, unit="h")
             # set a new start date for this run
-            self.tmp_log.append('Restart date is {}'.format(self.start_date))
+            self.tmp_log.append("Restart date is {}".format(self.start_date))
 
         # read in update depth parameters
         self.update_depth = False
-        if 'update depth' in self.config:
-            self.update_depth = self.config['update depth']['update']
+        if "update depth" in self.config:
+            self.update_depth = self.config["update depth"]["update"]
         if self.update_depth:
-            self.update_file = self.config['update depth']['update_file']
-            self.update_buffer = self.config['update depth']['buffer']
-            self.flight_numbers = self.config['update depth']['flight_numbers']
+            self.update_file = self.config["update depth"]["update_file"]
+            self.update_buffer = self.config["update depth"]["buffer"]
+            self.flight_numbers = self.config["update depth"]["flight_numbers"]
             # if flights to use is not list, make it a list
             if self.flight_numbers is not None:
                 if not isinstance(self.flight_numbers, list):
                     self.flight_numbers = [self.flight_numbers]
 
         # ################ Topo data for iSnobal ##################
-        self.soil_temp = self.config['soil_temp']['temp']
+        self.soil_temp = self.config["soil_temp"]["temp"]
         self.load_topo()
 
         # ################ Generate config backup ##################
         # if self.config['output']['input_backup']:
         # set location for backup and output backup of awsm sections
-        config_backup_location = \
-            os.path.join(self.path_output, 'awsm_config_backup.ini')
+        config_backup_location = os.path.join(
+            self.path_output, "awsm_config_backup.ini"
+        )
         generate_config(self.ucfg, config_backup_location)
 
         # create log now that directory structure is done
@@ -168,29 +166,27 @@ class AWSM():
         # if we have a model, initialize it
         if self.model_type is not None:
             self.model_init = ModelInit(
-                self.config,
-                self.topo,
-                self.path_output,
-                self.start_date
+                self.config, self.topo, self.path_output, self.start_date
             )
 
     @property
     def awsm_config_sections(self):
-        return MasterConfig(modules='awsm').cfg.keys()
+        return MasterConfig(modules="awsm").cfg.keys()
 
     @property
     def smrf_config_sections(self):
-        return MasterConfig(modules='smrf').cfg.keys()
+        return MasterConfig(modules="smrf").cfg.keys()
 
     def read_config(self, config):
         if isinstance(config, str):
             if not os.path.isfile(config):
-                raise Exception('Configuration file does not exist --> {}'
-                                .format(config))
+                raise Exception(
+                    "Configuration file does not exist --> {}".format(config)
+                )
             configFile = config
 
             try:
-                combined_mcfg = MasterConfig(modules=['smrf', 'awsm'])
+                combined_mcfg = MasterConfig(modules=["smrf", "awsm"])
 
                 # Read in the original users config
                 self.ucfg = get_user_config(configFile, mcfg=combined_mcfg)
@@ -198,22 +194,23 @@ class AWSM():
 
             except UnicodeDecodeError as e:
                 print(e)
-                raise Exception(('The configuration file is not encoded in '
-                                 'UTF-8, please change and retry'))
+                raise Exception(
+                    "The configuration file is not encoded in UTF-8, please change and retry"
+                )
 
         elif isinstance(config, UserConfig):
             self.ucfg = config
 
         else:
-            raise Exception("""Config passed to AWSM is neither file """
-                            """name nor UserConfig instance""")
+            raise Exception(
+                "Config passed to AWSM is neither file name nor UserConfig instance"
+            )
 
         warnings, errors = check_config(self.ucfg)
 
         if len(errors) > 0:
             print_config_report(warnings, errors)
-            print("Errors in the config file. "
-                  "See configuration status report above.")
+            print("Errors in the config file. See configuration status report above.")
             sys.exit()
         elif len(warnings) > 0 and not self.testing:
             print_config_report(warnings, errors)
@@ -221,41 +218,39 @@ class AWSM():
         self.config = self.ucfg.cfg
 
     def load_topo(self):
-
-        self.topo = smrf.data.load_topo.Topo(self.config['topo'])
+        self.topo = smrf.data.load_topo.Topo(self.config["topo"])
 
         if not self.mask_isnobal:
             self.topo.mask = np.ones_like(self.topo.dem)
 
         # see if roughness is in the topo
-        f = nc.Dataset(self.config['topo']['filename'], 'r')
+        f = nc.Dataset(self.config["topo"]["filename"], "r")
         f.set_always_mask(False)
-        if 'roughness' not in f.variables.keys():
-            self.tmp_warn.append(
-                'No surface roughness given in topo, setting to 5mm')
+        if "roughness" not in f.variables.keys():
+            self.tmp_warn.append("No surface roughness given in topo, setting to 5mm")
             self.topo.roughness = 0.005 * np.ones_like(self.topo.dem)
         else:
-            self.topo.roughness = f.variables['roughness'][:].astype(
-                np.float64)
+            self.topo.roughness = f.variables["roughness"][:].astype(np.float64)
 
         f.close()
 
     def parse_time(self):
-        """Parse the time configuration
+        """
+        Parse the time configuration
         """
 
-        self.start_date = pd.to_datetime(self.config['time']['start_date'])
-        self.end_date = pd.to_datetime(self.config['time']['end_date'])
-        self.time_step = self.config['time']['time_step']
-        self.tzinfo = pytz.timezone(self.config['time']['time_zone'])
+        self.start_date = pd.to_datetime(self.config["time"]["start_date"])
+        self.end_date = pd.to_datetime(self.config["time"]["end_date"])
+        self.time_step = self.config["time"]["time_step"]
+        self.tzinfo = pytz.timezone(self.config["time"]["time_zone"])
 
         # date to use for finding wy
         self.start_date = self.start_date.replace(tzinfo=self.tzinfo)
         self.end_date = self.end_date.replace(tzinfo=self.tzinfo)
 
         # find water year hour of start and end date
-        self.start_wyhr = int(utils.water_day(self.start_date)[0]*24)
-        self.end_wyhr = int(utils.water_day(self.end_date)[0]*24)
+        self.start_wyhr = int(utils.water_day(self.start_date)[0] * 24)
+        self.end_wyhr = int(utils.water_day(self.end_date)[0] * 24)
 
     def parse_folder_structure(self):
         """
@@ -265,27 +260,28 @@ class AWSM():
             ValueError: daily_folders can only be ran with smrf_ipysnobal
         """
 
-        if self.config['paths']['path_dr'] is not None:
-            self.path_dr = os.path.abspath(self.config['paths']['path_dr'])
+        if self.config["paths"]["path_dr"] is not None:
+            self.path_dr = os.path.abspath(self.config["paths"]["path_dr"])
         else:
-            print('No base path to drive given. Exiting now!')
+            print("No base path to drive given. Exiting now!")
             sys.exit()
 
         # setting to output in seperate daily folders
-        self.daily_folders = self.config['awsm system']['daily_folders']
+        self.daily_folders = self.config["awsm system"]["daily_folders"]
         if self.daily_folders and not self.run_smrf_ipysnobal:
-            raise ValueError('Cannot run daily_folders with anything other'
-                             ' than run_smrf_ipysnobal')
+            raise ValueError(
+                "Cannot run daily_folders with anything other than run_smrf_ipysnobal"
+            )
 
     def create_log(self):
-        '''
+        """
         Now that the directory structure is done, create log file and print out
         saved logging statements.
-        '''
+        """
 
         # setup the logging
         logfile = None
-        if self.config['awsm system']['log_to_file']:
+        if self.config["awsm system"]["log_to_file"]:
             # if self.config['isnobal restart']['restart_crash']:
             #     logfile = \
             #         os.path.join(self.path_log,
@@ -297,17 +293,18 @@ class AWSM():
             #                      '{}.out'.format(self.folder_date_stamp))
             # else:
             logfile = os.path.join(
-                self.path_log, 'log_{}.out'.format(self.folder_date_stamp)
+                self.path_log, "log_{}.out".format(self.folder_date_stamp)
             )
 
-        self.config['awsm system']['log_file'] = logfile
-        logger.SMRFLogger(self.config['awsm system'])
+        self.config["awsm system"]["log_file"] = logfile
+        logger.SMRFLogger(self.config["awsm system"])
 
         self._logger = logging.getLogger(__name__)
 
-        if self._logger.level == logging.DEBUG and \
-                not os.getenv('SUPPRESS_AWSM_STDOUT'):
-            print('Logging to file: {}'.format(logfile))
+        if self._logger.level == logging.DEBUG and not os.getenv(
+            "SUPPRESS_AWSM_STDOUT"
+        ):
+            print("Logging to file: {}".format(logfile))
 
         self._logger.info(ascii_art.MOUNTAIN)
         self._logger.info(ascii_art.TITLE)
@@ -341,29 +338,27 @@ class AWSM():
 
         return os.path.join(
             self.path_dr,
-            self.config['paths']['basin'],
-            'wy{}'.format(water_year),
-            self.config['paths']['project_name']
+            self.config["paths"]["basin"],
+            "wy{}".format(water_year),
+            self.config["paths"]["project_name"],
         )
 
     def format_folder_date_style(self):
         """
         Returns the folder date style
         """
-        config_value = self.config['paths']['folder_date_style']
-        if config_value == 'day':
+        config_value = self.config["paths"]["folder_date_style"]
+        if config_value == "day":
             return self.start_date.strftime(self.DATE_FOLDER_FORMAT)
 
-        elif config_value == 'start_end':
-            return '{}_{}'.format(
+        elif config_value == "start_end":
+            return "{}_{}".format(
                 self.start_date.strftime(self.DATE_FOLDER_FORMAT),
-                self.end_date.strftime(self.DATE_FOLDER_FORMAT)
+                self.end_date.strftime(self.DATE_FOLDER_FORMAT),
             )
 
         else:
-            raise ValueError(
-                'Unknown folder date style: {}'.format(config_value)
-            )
+            raise ValueError("Unknown folder date style: {}".format(config_value))
 
     def set_path_output(self):
         """
@@ -371,26 +366,22 @@ class AWSM():
         """
         self.folder_date_stamp = self.format_folder_date_style()
         self.path_output = os.path.join(
-            self.path_wy,
-            'run{}'.format(self.folder_date_stamp)
+            self.path_wy, "run{}".format(self.folder_date_stamp)
         )
-
 
     def mk_directories(self):
         """
         Create all needed directories starting from the working drive
         """
-        self.tmp_log.append('AWSM creating directories')
+        self.tmp_log.append("AWSM creating directories")
 
         self.path_wy = self.basin_path()
         self.set_path_output()
-        self.path_log = os.path.join(self.path_output, 'logs')
+        self.path_log = os.path.join(self.path_output, "logs")
 
         # name of temporary smrf file to write out
-        self.smrfini = os.path.join(self.path_wy, 'tmp_smrf_config.ini')
-        self.forecastini = os.path.join(
-            self.path_wy, 'tmp_smrf_forecast_config.ini'
-        )
+        self.smrfini = os.path.join(self.path_wy, "tmp_smrf_config.ini")
+        self.forecastini = os.path.join(self.path_wy, "tmp_smrf_forecast_config.ini")
 
         # Only start if your drive exists
         if os.path.exists(self.path_dr):
@@ -399,9 +390,10 @@ class AWSM():
             self.create_project_description()
 
         else:
-            self.tmp_err.append('Base directory did not exist, '
-                                'not safe to continue. Make sure base '
-                                'directory exists before running.')
+            self.tmp_err.append(
+                "Base directory did not exist, not safe to continue. Make sure base "
+                "directory exists before running."
+            )
             print(self.tmp_err)
             sys.exit()
 
@@ -409,13 +401,13 @@ class AWSM():
         """
         Create a project description in the base water year directory
         """
-        fp_desc = os.path.join(self.path_wy, 'projectDescription.txt')
+        fp_desc = os.path.join(self.path_wy, "projectDescription.txt")
 
         if not os.path.isfile(fp_desc):
-            with open(fp_desc, 'w') as f:
-                f.write(self.config['paths']['project_description'])
+            with open(fp_desc, "w") as f:
+                f.write(self.config["paths"]["project_description"])
         else:
-            self.tmp_log.append('Description file already exists\n')
+            self.tmp_log.append("Description file already exists\n")
 
     def make_directories(self, path_name):
         """
@@ -428,7 +420,8 @@ class AWSM():
             os.makedirs(path_name)
         else:
             self.tmp_log.append(
-                'Directory --{}-- exists, not creating.\n'.format(path_name))
+                "Directory --{}-- exists, not creating.\n".format(path_name)
+            )
 
     def __enter__(self):
         self.start_time = datetime.now()
@@ -440,9 +433,9 @@ class AWSM():
         """
 
         self._logger.info(
-            'AWSM finished in: {}'.format(datetime.now() - self.start_time)
+            "AWSM finished in: {}".format(datetime.now() - self.start_time)
         )
-        self._logger.info('AWSM closed --> %s' % datetime.now())
+        self._logger.info("AWSM closed --> %s" % datetime.now())
 
 
 def run_awsm(config, testing=False):
