@@ -57,6 +57,9 @@ class SMRFConnector:
         smrf_config.cfg["time"]["start_date"] = self.myawsm.start_date
         smrf_config.cfg["time"]["end_date"] = self.myawsm.end_date
 
+        # Set to same threads as AWSM
+        smrf_config.cfg["system"]["threads"] = self.myawsm.ithreads
+
         # set output location in smrf config
         smrf_config.cfg["output"]["out_location"] = self.myawsm.path_output
         self.output_path = self.myawsm.path_output
