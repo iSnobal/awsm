@@ -29,7 +29,7 @@ Outline
 """
 
 
-class ModelInit():
+class ModelInit:
     """
     Class for initializing snow model. Only runs if a model is specified
     in the AWSM config.
@@ -56,31 +56,31 @@ class ModelInit():
         self.start_date = start_date
 
         # get parameters from awsm
-        self.init_file = cfg['files']['init_file']
-        self.init_type = cfg['files']['init_type']
+        self.init_file = cfg["files"]["init_file"]
+        self.init_type = cfg["files"]["init_type"]
 
         if self.init_file is not None:
             self._logger.info(
-                'Using {} to build model init state.'.format(self.init_file)
+                "Using {} to build model init state.".format(self.init_file)
             )
 
         # type of model run
-        self.model_type = cfg['awsm master']['model_type']
+        self.model_type = cfg["awsm master"]["model_type"]
         # paths
         self.path_output = path_output
         # restart parameters
-        self.restart_crash = cfg['isnobal restart']['restart_crash']
-        self.restart_hr = cfg['isnobal restart']['wyh_restart_output']
-        self.depth_thresh = cfg['isnobal restart']['depth_thresh']
-        self.restart_folder = cfg['isnobal restart']['output_folders']
+        self.restart_crash = cfg["isnobal restart"]["restart_crash"]
+        self.restart_hr = cfg["isnobal restart"]["wyh_restart_output"]
+        self.depth_thresh = cfg["isnobal restart"]["depth_thresh"]
+        self.restart_folder = cfg["isnobal restart"]["output_folders"]
 
         # dictionary to store init data
         self.init = {}
-        self.init['x'] = self.topo.x
-        self.init['y'] = self.topo.y
-        self.init['mask'] = self.topo.mask
-        self.init['z_0'] = self.topo.roughness
-        self.init['elevation'] = self.topo.dem
+        self.init["x"] = self.topo.x
+        self.init["y"] = self.topo.y
+        self.init["mask"] = self.topo.mask
+        self.init["z_0"] = self.topo.roughness
+        self.init["elevation"] = self.topo.dem
         # read in the init file
         self.get_init_file()
 
@@ -89,10 +89,10 @@ class ModelInit():
 
         if self.model_type in ["ipysnobal"]:
             # convert temperatures to K
-            self.init['T_s'] += FREEZE
-            self.init['T_s_0'] += FREEZE
-            if 'T_s_l' in self.init:
-                self.init['T_s_l'] += FREEZE
+            self.init["T_s"] += FREEZE
+            self.init["T_s_0"] += FREEZE
+            if "T_s_l" in self.init:
+                self.init["T_s_l"] += FREEZE
 
     def get_init_file(self):
         """
@@ -106,9 +106,9 @@ class ModelInit():
         elif self.init_file is None:
             self.get_zero_init()
         # get init depending on file type
-        elif self.init_type == 'netcdf':
+        elif self.init_type == "netcdf":
             self.get_netcdf()
-        elif self.init_type == 'netcdf_out':
+        elif self.init_type == "netcdf_out":
             self.get_netcdf_out()
 
     def get_crash_init(self):
@@ -121,33 +121,33 @@ class ModelInit():
             init:    dictionary of initialized variables
         """
 
-        self.init_type = 'netcdf_out'
+        self.init_type = "netcdf_out"
         # find the correct output folder from which to restart
-        if self.restart_folder == 'standard':
-            self.init_file = os.path.join(self.path_output, 'snow.nc')
+        if self.restart_folder == "standard":
+            self.init_file = os.path.join(self.path_output, "snow.nc")
 
-        elif self.restart_folder == 'daily':
-            fmt = '%Y%m%d'
+        elif self.restart_folder == "daily":
+            fmt = "%Y%m%d"
             # get the date string
             day_str = self.path_output[-8:]
-            day_dt = pd.to_datetime(day_str) - \
-                pd.to_timedelta(1, unit='days')
+            day_dt = pd.to_datetime(day_str) - pd.to_timedelta(1, unit="days")
             day_dt_str = day_dt.strftime(fmt)
             # get the previous day
-            path_prev_day = os.path.join(self.path_output,
-                                         '..', 'run'+day_dt_str)
-            self.init_file = os.path.join(path_prev_day, 'snow.nc')
+            path_prev_day = os.path.join(self.path_output, "..", "run" + day_dt_str)
+            self.init_file = os.path.join(path_prev_day, "snow.nc")
 
         self.get_netcdf_out()
 
         # zero depths under specified threshold
-        restart_var = self.zero_crash_depths(self.depth_thresh,
-                                             self.init['z_s'],
-                                             self.init['rho'],
-                                             self.init['T_s_0'],
-                                             self.init['T_s_l'],
-                                             self.init['T_s'],
-                                             self.init['h2o_sat'])
+        restart_var = self.zero_crash_depths(
+            self.depth_thresh,
+            self.init["z_s"],
+            self.init["rho"],
+            self.init["T_s_0"],
+            self.init["T_s_l"],
+            self.init["T_s"],
+            self.init["h2o_sat"],
+        )
         # put variables back in init dictionary
         for k, v in restart_var.items():
             self.init[k] = v
@@ -156,31 +156,31 @@ class ModelInit():
         """
         Set init fields for zero init
         """
-        self._logger.info('No init file given, using zero fields')
-        self.init['z_s'] = 0.0*self.topo.mask  # snow depth
-        self.init['rho'] = 0.0*self.topo.mask  # snow density
+        self._logger.info("No init file given, using zero fields")
+        self.init["z_s"] = 0.0 * self.topo.mask  # snow depth
+        self.init["rho"] = 0.0 * self.topo.mask  # snow density
 
-        self.init['T_s_0'] = -75.0*self.topo.mask  # active layer temp
-        self.init['T_s_l'] = -75.0*self.topo.mask  # lower layer temp
-        self.init['T_s'] = -75.0*self.topo.mask  # average snow temp
+        self.init["T_s_0"] = -75.0 * self.topo.mask  # active layer temp
+        self.init["T_s_l"] = -75.0 * self.topo.mask  # lower layer temp
+        self.init["T_s"] = -75.0 * self.topo.mask  # average snow temp
 
-        self.init['h2o_sat'] = 0.0*self.topo.mask  # percent saturation
+        self.init["h2o_sat"] = 0.0 * self.topo.mask  # percent saturation
 
     def get_netcdf(self):
         """
         Get init fields from netcdf init file
         """
-        i = nc.Dataset(self.init_file, 'r')
+        i = nc.Dataset(self.init_file, "r")
         i.set_always_mask(False)
 
         # All other variables will be assumed zero if not present
-        all_zeros = np.zeros_like(self.init['elevation'])
-        flds = ['z_s', 'rho', 'T_s_0', 'T_s', 'h2o_sat', 'T_s_l']
+        all_zeros = np.zeros_like(self.init["elevation"])
+        flds = ["z_s", "rho", "T_s_0", "T_s", "h2o_sat", "T_s_l"]
 
-        if len(i.variables['time'][:]) > 1:
+        if len(i.variables["time"][:]) > 1:
             self._logger.warning(
-                """More than one time step found in the init """
-                """file, using first index""")
+                "More than one time step found in the init file, using first index"
+            )
 
         for f in flds:
             # if i.variables.has_key(f):
@@ -202,28 +202,26 @@ class ModelInit():
         ds = xr.open_dataset(self.init_file)
 
         # Xarray needs a timezone naive object for selecting
-        init_data = ds.sel(
-            time=self.start_date.replace(tzinfo=None), method='nearest'
-        )
+        init_data = ds.sel(time=self.start_date.replace(tzinfo=None), method="nearest")
         time_diff = self.start_date.tz_localize(None) - init_data.time.values
 
-        if time_diff.total_seconds() < 0 or \
-                time_diff.total_seconds() > 24*3600:
+        if time_diff.total_seconds() < 0 or time_diff.total_seconds() > 24 * 3600:
             self._logger.error(
-                'No time in restart file that is within a day of restart time')
+                "No time in restart file that is within a day of restart time"
+            )
 
         self._logger.info(
-            'Initializing PySnobal with state from {}'.format(
+            "Initializing PySnobal with state from {}".format(
                 str(init_data.time.values)
             )
         )
 
-        self.init['z_s'] = init_data.thickness.values
-        self.init['rho'] = init_data.snow_density.values
-        self.init['T_s_0'] = init_data.temp_surf.values
-        self.init['T_s'] = init_data.temp_snowcover.values
-        self.init['T_s_l'] = init_data.temp_lower.values
-        self.init['h2o_sat'] = init_data.water_saturation.values
+        self.init["z_s"] = init_data.thickness.values
+        self.init["rho"] = init_data.snow_density.values
+        self.init["T_s_0"] = init_data.temp_surf.values
+        self.init["T_s"] = init_data.temp_snowcover.values
+        self.init["T_s_l"] = init_data.temp_lower.values
+        self.init["h2o_sat"] = init_data.water_saturation.values
 
         ds.close()
 
@@ -252,9 +250,11 @@ class ModelInit():
         num_pix_tot = z_s.size
 
         self._logger.warning(
-            'Zeroing depth in pixels lower than {} [m]'.format(depth_thresh))
+            "Zeroing depth in pixels lower than {} [m]".format(depth_thresh)
+        )
         self._logger.warning(
-            'Zeroing depth in {} out of {} total pixels'.format(num_pix, num_pix_tot))
+            "Zeroing depth in {} out of {} total pixels".format(num_pix, num_pix_tot)
+        )
 
         z_s[idz] = 0.0
         rho[idz] = 0.0
@@ -264,11 +264,11 @@ class ModelInit():
         h2o_sat[idz] = 0.0
 
         restrat_var = {}
-        restrat_var['z_s'] = z_s
-        restrat_var['rho'] = rho
-        restrat_var['T_s_0'] = T_s_0
-        restrat_var['T_s_l'] = T_s_l
-        restrat_var['T_s'] = T_s
-        restrat_var['h2o_sat'] = h2o_sat
+        restrat_var["z_s"] = z_s
+        restrat_var["rho"] = rho
+        restrat_var["T_s_0"] = T_s_0
+        restrat_var["T_s_l"] = T_s_l
+        restrat_var["T_s"] = T_s
+        restrat_var["h2o_sat"] = h2o_sat
 
         return restrat_var
