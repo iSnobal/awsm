@@ -9,31 +9,31 @@ import netCDF4 as nc
 from smrf.framework.model_framework import run_smrf
 
 
-class SMRFConnector():
-
+class SMRFConnector:
     # map function from these values to the ones required by snobal
-    MAP_INPUTS = MappingProxyType({
-        'air_temp': 'T_a',
-        'net_solar': 'S_n',
-        'thermal': 'I_lw',
-        'vapor_pressure': 'e_a',
-        'wind_speed': 'u',
-        'soil_temp': 'T_g',
-        'precip': 'm_pp',
-        'percent_snow': 'percent_snow',
-        'snow_density': 'rho_snow',
-        'precip_temp': 'T_pp'
-    })
+    MAP_INPUTS = MappingProxyType(
+        {
+            "air_temp": "T_a",
+            "net_solar": "S_n",
+            "thermal": "I_lw",
+            "vapor_pressure": "e_a",
+            "wind_speed": "u",
+            "soil_temp": "T_g",
+            "precip": "m_pp",
+            "percent_snow": "percent_snow",
+            "snow_density": "rho_snow",
+            "precip_temp": "T_pp",
+        }
+    )
 
     def __init__(self, myawsm):
-
         self._logger = logging.getLogger(__name__)
         self.myawsm = myawsm
         self.force = None
 
         self.create_smrf_config()
 
-        self._logger.info('SMRFConnector initialized')
+        self._logger.info("SMRFConnector initialized")
 
     def create_smrf_config(self):
         """
@@ -41,36 +41,35 @@ class SMRFConnector():
         :mod: `AWSM` config and remove the sections specific to :mod: `AWSM`.
         We do this because these sections will break the config checker utility
         """
-        self.myawsm._logger.info('Making SMRF config')
+        self.myawsm._logger.info("Making SMRF config")
 
         delete_keys = self.myawsm.awsm_config_sections
 
-        # Write out config file to run smrf
-        # make copy and delete only awsm sections
+        # Write out config file to run smrf and delete only awsm sections
         smrf_config = copy.deepcopy(self.myawsm.ucfg)
         smrf_config.cfg = {
-            key: item for key, item in self.myawsm.ucfg.cfg.items() if key not in delete_keys  # noqa
+            key: item
+            for key, item in self.myawsm.ucfg.cfg.items()
+            if key not in delete_keys  # noqa
         }
 
         # make sure start and end date are correcting
-        smrf_config.cfg['time']['start_date'] = self.myawsm.start_date
-        smrf_config.cfg['time']['end_date'] = self.myawsm.end_date
+        smrf_config.cfg["time"]["start_date"] = self.myawsm.start_date
+        smrf_config.cfg["time"]["end_date"] = self.myawsm.end_date
 
-        # change start date if using smrf_ipysnobal and restarting
-        if self.myawsm.restart_run and self.myawsm.run_smrf_ipysnobal:
-            smrf_config.cfg['time']['start_date'] = self.myawsm.restart_date
+        # Set to same threads as AWSM
+        smrf_config.cfg["system"]["threads"] = self.myawsm.ithreads
 
         # set output location in smrf config
-        smrf_config.cfg['output']['out_location'] = self.myawsm.path_output
+        smrf_config.cfg["output"]["out_location"] = self.myawsm.path_output
         self.output_path = self.myawsm.path_output
 
         self.smrf_config = smrf_config
 
     def run_smrf(self):
-        """Run SMRF using the `run_smrf` from the SMRF API
-        """
+        """Run SMRF using the `run_smrf` from the SMRF API"""
 
-        self._logger.info('Running SMRF')
+        self._logger.info("Running SMRF")
         run_smrf(self.smrf_config, self._logger)
 
     def open_netcdf_files(self):
@@ -86,16 +85,15 @@ class SMRFConnector():
 
         self.force = {}
         for variable in self.MAP_INPUTS.keys():
-
             # Soil temperature is a constant value defined in the .ini file
-            if variable == 'soil_temp':
-                self.force['soil_temp'] = float(self.myawsm.soil_temp) * \
-                    np.ones_like(self.myawsm.topo.dem)
+            if variable == "soil_temp":
+                self.force["soil_temp"] = float(self.myawsm.soil_temp) * np.ones_like(
+                    self.myawsm.topo.dem
+                )
                 continue
 
             self.force[variable] = nc.Dataset(
-                os.path.join(self.output_path, '{}.nc'.format(variable)),
-                'r'
+                os.path.join(self.output_path, "{}.nc".format(variable)), "r"
             )
 
     def close_netcdf_files(self):
@@ -130,9 +128,9 @@ class SMRFConnector():
 
             else:
                 # make sure you're in the same timezone
-                if hasattr(self.force[variable].variables['time'], 'time_zone'):
-                    tstep_zone = tstep.astimezone(pytz.timezone(
-                        self.force[variable].variables['time'].time_zone)
+                if hasattr(self.force[variable].variables["time"], "time_zone"):
+                    tstep_zone = tstep.astimezone(
+                        pytz.timezone(self.force[variable].variables["time"].time_zone)
                     )
                     tstep_zone = tstep.tz_localize(None)
                 else:
@@ -141,13 +139,14 @@ class SMRFConnector():
                 # find the index based on the time step
                 t = nc.date2index(
                     tstep_zone,
-                    self.force[variable].variables['time'],
-                    calendar=self.force[variable].variables['time'].calendar,
-                    select='exact'
+                    self.force[variable].variables["time"],
+                    calendar=self.force[variable].variables["time"].calendar,
+                    select="exact",
                 )
 
                 # pull out the value
-                inpt[self.MAP_INPUTS[variable]] = \
+                inpt[self.MAP_INPUTS[variable]] = (
                     self.force[variable].variables[variable][t, :].astype(np.float64)
+                )
 
         return inpt

@@ -59,9 +59,6 @@ class AWSM:
         # ################## Decide which modules to run #####################
         self.do_smrf = self.config["awsm master"]["run_smrf"]
         self.model_type = self.config["awsm master"]["model_type"]
-        # self.do_smrf_ipysnobal = \
-        #     self.config['awsm master']['run_smrf_ipysnobal']
-        # self.do_ipysnobal = self.config['awsm master']['run_ipysnobal']
         self.do_forecast = False
         if "gridded" in self.config and self.do_smrf:
             # self.do_forecast = self.config['gridded']['hrrr_forecast_flag']
@@ -255,9 +252,6 @@ class AWSM:
     def parse_folder_structure(self):
         """
         Parse the config to get the folder structure
-
-        Raises:
-            ValueError: daily_folders can only be ran with smrf_ipysnobal
         """
 
         if self.config["paths"]["path_dr"] is not None:
@@ -266,12 +260,8 @@ class AWSM:
             print("No base path to drive given. Exiting now!")
             sys.exit()
 
-        # setting to output in seperate daily folders
+        # setting to output in separate daily folders
         self.daily_folders = self.config["awsm system"]["daily_folders"]
-        if self.daily_folders and not self.run_smrf_ipysnobal:
-            raise ValueError(
-                "Cannot run daily_folders with anything other than run_smrf_ipysnobal"
-            )
 
     def create_log(self):
         """
