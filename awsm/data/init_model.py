@@ -87,7 +87,7 @@ class ModelInit():
         for key in self.init.keys():
             self.init[key] = self.init[key].astype(np.float64)
 
-        if self.model_type in ['ipysnobal', 'smrf_ipysnobal']:
+        if self.model_type in ["ipysnobal"]:
             # convert temperatures to K
             self.init['T_s'] += FREEZE
             self.init['T_s_0'] += FREEZE
