@@ -93,6 +93,12 @@ class AWSM:
 
         # threads for running iSnobal
         self.ithreads = self.config["awsm system"]["ithreads"]
+        # ipysnobal parameters
+        self.ipy_threads = self.ithreads
+        self.ipy_init_type = self.config["files"]["init_type"]
+        self.forcing_data_type = self.config.get("ipysnobal", {}).get(
+            "forcing_data_type", {}
+        )
         # how often to output form iSnobal
         self.output_freq = self.config["awsm system"]["output_frequency"]
         # number of timesteps to run if ou don't want to run the whole thing
@@ -103,37 +109,26 @@ class AWSM:
         # snow and emname
         self.snow_name = self.config["awsm system"]["snow_name"]
         self.em_name = self.config["awsm system"]["em_name"]
+        # iSnobal active layer
+        self.active_layer = self.config["grid"]["active_layer"]
 
         # options for restarting iSnobal
         self.restart_crash = False
-        if self.config["isnobal restart"]["restart_crash"]:
-            self.restart_crash = True
+        self.restart_run = False
+        if self.config.get("isnobal restart", {}).get("restart_crash", False):
+            self.restart_crash = self.config["isnobal restart"]["restart_crash"]
+            self.restart_run = True
             # self.new_init = self.config['isnobal restart']['new_init']
             self.depth_thresh = self.config["isnobal restart"]["depth_thresh"]
             self.restart_hr = int(self.config["isnobal restart"]["wyh_restart_output"])
             self.restart_folder = self.config["isnobal restart"]["output_folders"]
-
-        # iSnobal active layer
-        self.active_layer = self.config["grid"]["active_layer"]
-
-        # ipysnobal parameters
-        self.ipy_threads = self.ithreads
-        self.ipy_init_type = self.config["files"]["init_type"]
-        self.forcing_data_type = self.config["ipysnobal"]["forcing_data_type"]
-
-        # parameters needed for restart procedure
-        self.restart_run = False
-        if self.config["isnobal restart"]["restart_crash"]:
-            self.restart_run = True
             # find restart hour datetime
             reset_offset = pd.to_timedelta(self.restart_hr, unit="h")
             # set a new start date for this run
             self.tmp_log.append("Restart date is {}".format(self.start_date))
 
         # read in update depth parameters
-        self.update_depth = False
-        if "update depth" in self.config:
-            self.update_depth = self.config["update depth"]["update"]
+        self.update_depth = self.config.get("update depth", {}).get("update", False)
         if self.update_depth:
             self.update_file = self.config["update depth"]["update_file"]
             self.update_buffer = self.config["update depth"]["buffer"]
@@ -143,8 +138,8 @@ class AWSM:
                 if not isinstance(self.flight_numbers, list):
                     self.flight_numbers = [self.flight_numbers]
 
-        # ################ Topo data for iSnobal ##################
         self.soil_temp = self.config["soil_temp"]["temp"]
+        # ################ Topo data for iSnobal ##################
         self.load_topo()
 
         # ################ Generate config backup ##################

@@ -69,10 +69,12 @@ class ModelInit:
         # paths
         self.path_output = path_output
         # restart parameters
-        self.restart_crash = cfg["isnobal restart"]["restart_crash"]
-        self.restart_hr = cfg["isnobal restart"]["wyh_restart_output"]
-        self.depth_thresh = cfg["isnobal restart"]["depth_thresh"]
-        self.restart_folder = cfg["isnobal restart"]["output_folders"]
+
+        self.restart_crash = cfg.get("isnobal restart", {}).get("restart_crash", False)
+        if self.restart_crash:
+            self.restart_hr = cfg["isnobal restart"]["wyh_restart_output"]
+            self.depth_thresh = cfg["isnobal restart"]["depth_thresh"]
+            self.restart_folder = cfg["isnobal restart"]["output_folders"]
 
         # dictionary to store init data
         self.init = {}
