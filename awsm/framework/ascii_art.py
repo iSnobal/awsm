@@ -24,6 +24,17 @@ MOUNTAIN = \
     r"IIIIilIIIIITTTTTTTIIIIIIIIIIIIITTTTTIIIIIIIIITTTTTTTTTTIIIIIIIIIlIIIIIIIITTTT" + "\n" \
     r"IIIIIIIIITTTTTTTTTTTTTIIIIIIIITTTTTTTTIIIIIITTTTTTTTTTTTTTIIIIIIIIIIIIIITTTTT" + "\n"
 
+MOUNTAIN_SM = """
+             /\                   /\ 
+            /**\     /\          /**\ 
+           /****\   /**\        /****\    /\ 
+          /******\ /****\ /\   /******\  /**\ 
+         /  /\    \      /**\ / /\     \/    \ 
+       /\  /  \    \YYYY/    \Y/  \YYYY/      \ 
+      /  \/YYYY\    \YY/YYYYYY/    \YY/YYYYYYYY\ 
+     /YYY.\..YYY\....\/..YYYY/Y.....\/YYYYYY....\ 
+    :::::...:::;;:::::;;;;;;;;;;;;;;:::::;;::;;;::"""
+
 TITLE = \
     " \n \n" + \
     '               AAA   WWWWWWWW                           WWWWWWWW   SSSSSSSSSSSSSSS MMMMMMMM               MMMMMMMM' + "\n" \
@@ -42,3 +53,11 @@ TITLE = \
     '  A:::::A               A:::::AW:::::W         W:::::W          S::::::SSSSSS:::::SM::::::M               M::::::M' + "\n" \
     ' A:::::A                 A:::::AW:::W           W:::W           S:::::::::::::::SS M::::::M               M::::::M' + "\n" \
     'AAAAAAA                   AAAAAAAWWW             WWW             SSSSSSSSSSSSSSS   MMMMMMMM               MMMMMMMM' + "\n"
+
+TITLE_SM = """
+      AAA    WW     WW  SSSSS  MM    MM 
+     AAAAA   WW     WW SS      MMM  MMM 
+    AA   AA  WW  W  WW  SSSSS  MM MM MM 
+    AAAAAAA  WW WWW WW      SS MM    MM 
+    AA   AA   WW   WW   SSSSS  MM    MM"""
+

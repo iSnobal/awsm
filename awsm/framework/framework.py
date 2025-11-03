@@ -291,8 +291,8 @@ class AWSM:
         ):
             print("Logging to file: {}".format(logfile))
 
-        self._logger.info(ascii_art.MOUNTAIN)
-        self._logger.info(ascii_art.TITLE)
+        self._logger.info(ascii_art.MOUNTAIN_SM)
+        self._logger.info(ascii_art.TITLE_SM)
 
         # dump saved logs
         for line in self.tmp_log:
