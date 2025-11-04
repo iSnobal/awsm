@@ -1,5 +1,5 @@
 # Automated Water Supply Model (AWSM)
-Execution of the iSnobal snow mass and energy model along with the 
+Execution of the iSnobal snow mass and energy model along with the
 [Spatial Modeling for Resources Framework](https://github.com/iSnobal/smrf). iSnobal
 itself is called via [pysnobal](https://github.com/iSnobal/pysnobal) and AWSM
 wraps the interface of both packages into a central execution framework.
@@ -14,9 +14,14 @@ The installation of this package provides a command line interface to run the mo
 The command is called `awsm`.
 
 ## Examples
-### Run the first day
+### Run days set in the configuration file
 ```bash
-awsm -c awsm.ini -sd 2024-10-01 --no_previous
+awsm -c awsm.ini
+```
+
+### Run days set in the configuration file with the first day not having initialization data
+```bash
+awsm -c awsm.ini --no_previous
 ```
 
 ### Run a single day
@@ -24,15 +29,16 @@ awsm -c awsm.ini -sd 2024-10-01 --no_previous
 awsm -c awsm.ini -sd 2024-10-01
 ```
 
-### Run days set in the configuration file
+### Run a single individually, ignoring the model state from the previous day
 ```bash
-awsm -c awsm.ini
+awsm -c awsm.ini -sd 2024-10-01 --no_previous
 ```
 
-### Re-run after a model crash
+### Re-run single day after a model crash
 ```bash
 awsm -c awsm.ini -sd 2024-10-01 --threshold
 ```
+**NOTE**: This will only run iSnobal and requires all forcing data having been prepared successfully.
 
 ## Help
 ```bash
@@ -53,7 +59,7 @@ optional arguments:
 ```
 
 # Citation
-Each release of AWSM triggers a DOI via Zenodo and 
+Each release of AWSM triggers a DOI via Zenodo and
 [all versions can be found here](https://zenodo.org/search?q=parent.id%3A6543918&f=allversions%3Atrue&l=list&p=1&s=10&sort=version)
 
 DOI for all versions is: https://doi.org/10.5281/zenodo.6543918

@@ -2,7 +2,7 @@ import argparse
 import copy
 import os
 import sys
-from typing import Tuple
+from typing import Tuple, Union
 
 import pandas as pd
 import pytz
@@ -47,34 +47,41 @@ def output_for_date(config: UserConfig, date: pd.Timestamp):
     )
 
 
-def set_previous_day_outputs(config: UserConfig, start_date: pd.Timestamp) \
-    -> UserConfig:
+def set_previous_day_outputs(
+    config: UserConfig, start_date: Union[pd.Timestamp, None]
+) -> UserConfig:
     """
-    Set the previous day output for snow and storm days in the config
+    Set the previous day output for snow and storm days in the config. If "None"
+    is given for the output date, then the variables will be set to that.
 
     Parameters
     ----------
     config : UserConfig
         Parsed user config holding path information
-    start_date : datetime
-        Date to generate path for
+    start_date : datetime, None
+        Date to generate path for or "None"
 
     Returns
     -------
     UserConfig
         Updated user config with previous day output paths set
     """
-    prev_day = start_date - pd.to_timedelta(1, unit='D')
-    previous_output = output_for_date(config, prev_day)
+    if start_date is not None:
+        prev_day = start_date - pd.to_timedelta(1, unit="D")
+        previous_output = output_for_date(config, prev_day)
 
-    # Snow state variables
-    config.raw_cfg['files']['init_file'] = os.path.join(
-        previous_output, 'snow.nc'
-    )
-    # Snowfall days
-    config.raw_cfg['precip']['storm_days_restart'] = os.path.join(
-        previous_output, 'storm_days.nc'
-    )
+        # Snow state variables
+        config.raw_cfg["files"]["init_file"] = os.path.join(
+            previous_output, "snow.nc"
+        )
+        # Snowfall days
+        config.raw_cfg["precip"]["storm_days_restart"] = os.path.join(
+            previous_output, "storm_days.nc"
+        )
+    else:
+        config.raw_cfg["files"]["init_type"] = None
+        config.raw_cfg["files"]["init_file"] = None
+        config.raw_cfg["precip"]["storm_days_restart"] = None
 
     return config
 
@@ -174,8 +181,7 @@ def mod_config(
 
     if no_previous:
         # Run without initialization from previous day
-        config.raw_cfg['files']['init_type'] = None
-        config.raw_cfg['files']['init_file'] = None
+        config = set_previous_day_outputs(config, None)
     else:
         config = set_previous_day_outputs(config, start_date)
 
@@ -201,14 +207,19 @@ def mod_config(
     return apply_and_cast_variables(config)
 
 
-def run_awsm_daily(config_file: str):
+def run_awsm_daily(config_file: str, no_previous: bool = False):
     """
     Executes AWSM over a specified date range from the config file.
 
-    Args:
-        config_file: Path to the configuration file.
+    Arguments
+    ----------
+        config_file:
+            Path to the configuration file.
+        no_previous:
+            User given flag on whether the first day has a previous one
     """
     config = parse_config(config_file)
+    first_day = True
 
     # Days to loop over
     start_day = pd.to_datetime(
@@ -223,13 +234,18 @@ def run_awsm_daily(config_file: str):
         new_config = copy.deepcopy(config)
         new_config, start_day = set_single_day(new_config, start_day)
 
-        new_config = set_previous_day_outputs(new_config, start_day)
+        if first_day and no_previous:
+            new_config = set_previous_day_outputs(new_config, None)
+        else:
+            new_config = set_previous_day_outputs(new_config, start_day)
+
         new_config = apply_and_cast_variables(new_config)
 
         # Run awsm for the day
         run_awsm(new_config)
 
         start_day += pd.to_timedelta(1, unit='D')
+        first_day = False
 
 
 def parse_arguments(args=None):
@@ -288,7 +304,7 @@ def main():
 
         run_awsm(new_config)
     else:
-        run_awsm_daily(args.config_file)
+        run_awsm_daily(args.config_file, args.no_previous)
 
 
 if __name__ == '__main__':
