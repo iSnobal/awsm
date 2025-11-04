@@ -1,5 +1,7 @@
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime
+from io import StringIO
 from unittest.mock import MagicMock, patch
 import pytz
 import os
@@ -118,13 +120,14 @@ class TestModConfig(unittest.TestCase):
     @patch('awsm.cli.apply_and_cast_variables')
     def setUp(self, mock_apply_and_cast):
         config = {
-            'time': {
-                'start_date': '2023-01-01 00:00',
-                'end_date': '2023-01-02 00:00'
+            "time": {
+                "start_date": "2023-01-01 00:00",
+                "end_date": "2023-01-02 00:00",
             },
-            'files': {},
-            'grid': {},
-            'awsm master': {},
+            "precip": {},
+            "files": {},
+            "grid": {},
+            "awsm master": {},
         }
         self.config = MagicMock(raw_cfg=config)
 
@@ -217,13 +220,16 @@ class TestModConfig(unittest.TestCase):
         start = pd.Timestamp(f'{start_date} 00:00')
         end = pd.Timestamp(f'{start_date} 23:00')
 
-        config = mod_config(
-            '/path/to/config.ini',
-            start_date,
-            no_previous=False,
-            threshold=True,
-            medium_threshold=25
-        )
+        stdout = StringIO()
+
+        with redirect_stdout(stdout):
+            config = mod_config(
+                "/path/to/config.ini",
+                start_date,
+                no_previous=False,
+                threshold=True,
+                medium_threshold=25,
+            )
 
         self.assertEqual(
             config.raw_cfg['time']['start_date'],
