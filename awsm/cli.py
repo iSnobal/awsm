@@ -216,7 +216,7 @@ def run_awsm_daily(config_file: str, no_previous: bool = False):
         config_file:
             Path to the configuration file.
         no_previous:
-            User given flag on whether the first day has a previous one
+            User-specified flag for whether the first day should use a model state for the preceding day
     """
     config = parse_config(config_file)
     first_day = True
