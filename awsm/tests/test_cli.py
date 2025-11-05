@@ -1,29 +1,37 @@
-import unittest
-from datetime import datetime
-from unittest.mock import MagicMock, patch
-import pytz
 import os
+import unittest
+from contextlib import redirect_stdout
+from datetime import datetime
+from io import StringIO
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import pytz
 
 from awsm.cli import (
-    output_for_date, set_previous_day_outputs, set_single_day, mod_config,
-    run_awsm_daily, DATE_FORMAT, DATE_TIME_FORMAT, DAY_HOURS, parse_arguments,
-    main
+    DATE_FORMAT,
+    DATE_TIME_FORMAT,
+    DAY_HOURS,
+    main,
+    mod_config,
+    output_for_date,
+    parse_arguments,
+    run_awsm_daily,
+    set_previous_day_outputs,
+    set_single_day,
 )
+
 
 class TestOutputForDate(unittest.TestCase):
     def setUp(self):
         self.mock_config = MagicMock()
         self.mock_config.cfg = {
-            'time': {
-                'time_zone': 'UTC'
+            "time": {"time_zone": "UTC"},
+            "paths": {
+                "path_dr": "/data/output",
+                "basin": "test_basin",
+                "project_name": "test_project",
             },
-            'paths': {
-                'path_dr': '/data/output',
-                'basin': 'test_basin',
-                'project_name': 'test_project'
-            }
         }
 
     @patch('smrf.utils.utils.water_day')
@@ -118,13 +126,14 @@ class TestModConfig(unittest.TestCase):
     @patch('awsm.cli.apply_and_cast_variables')
     def setUp(self, mock_apply_and_cast):
         config = {
-            'time': {
-                'start_date': '2023-01-01 00:00',
-                'end_date': '2023-01-02 00:00'
+            "time": {
+                "start_date": "2023-01-01 00:00",
+                "end_date": "2023-01-02 00:00",
             },
-            'files': {},
-            'grid': {},
-            'awsm master': {},
+            "precip": {},
+            "files": {},
+            "grid": {},
+            "awsm master": {},
         }
         self.config = MagicMock(raw_cfg=config)
 
@@ -217,13 +226,16 @@ class TestModConfig(unittest.TestCase):
         start = pd.Timestamp(f'{start_date} 00:00')
         end = pd.Timestamp(f'{start_date} 23:00')
 
-        config = mod_config(
-            '/path/to/config.ini',
-            start_date,
-            no_previous=False,
-            threshold=True,
-            medium_threshold=25
-        )
+        stdout = StringIO()
+
+        with redirect_stdout(stdout):
+            config = mod_config(
+                "/path/to/config.ini",
+                start_date,
+                no_previous=False,
+                threshold=True,
+                medium_threshold=25,
+            )
 
         self.assertEqual(
             config.raw_cfg['time']['start_date'],
@@ -242,6 +254,10 @@ class TestModConfig(unittest.TestCase):
         self.assertEqual(
             config.raw_cfg['awsm master']['run_smrf'],
             False
+        )
+        self.assertTrue(
+            "Running model with medium mass threshold of: 25"
+            in stdout.getvalue()
         )
 
 class TestRunAwsmDaily(unittest.TestCase):
@@ -283,6 +299,33 @@ class TestRunAwsmDaily(unittest.TestCase):
                 self.config.cfg['time']['start_date'] + pd.Timedelta(days=index)
             )
 
+    @patch("awsm.cli.run_awsm")
+    @patch("awsm.cli.set_previous_day_outputs")
+    @patch("awsm.cli.parse_config")
+    def test_run_multiple_days_no_previous(
+        self, mock_parse_config, mock_previous_outputs, mock_run_awsm
+    ):
+        mock_parse_config.return_value = self.config
+        # Return the config parsed as argument
+        mock_previous_outputs.side_effect = lambda config, day: config
+
+        run_awsm_daily("/path/to/config.ini", True)
+
+        # Four days as configured in the setUp
+        assert mock_run_awsm.call_count == 4
+
+        # Check that each daily run has the previous day set with the proper date
+        for index, arguments in enumerate(mock_previous_outputs.call_args_list):
+            date = arguments[0][1]
+            if index == 0:
+                # First day will not set previous day inputs
+                self.assertIsNone(date)
+            else:
+                self.assertEqual(
+                    date,
+                    self.config.cfg["time"]["start_date"]
+                    + pd.Timedelta(days=index),
+                )
 class TestParseArguments(unittest.TestCase):
     def test_parse_minimum_required(self):
         parsed_args = parse_arguments(

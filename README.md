@@ -1,5 +1,5 @@
 # Automated Water Supply Model (AWSM)
-Execution of the iSnobal snow mass and energy model along with the 
+Execution of the iSnobal snow mass and energy model along with the
 [Spatial Modeling for Resources Framework](https://github.com/iSnobal/smrf). iSnobal
 itself is called via [pysnobal](https://github.com/iSnobal/pysnobal) and AWSM
 wraps the interface of both packages into a central execution framework.
@@ -14,25 +14,42 @@ The installation of this package provides a command line interface to run the mo
 The command is called `awsm`.
 
 ## Examples
-### Run the first day
-```bash
-awsm -c awsm.ini -sd 2024-10-01 --no_previous
-```
-
-### Run a single day
-```bash
-awsm -c awsm.ini -sd 2024-10-01
-```
-
-### Run days set in the configuration file
+### Run date range specified by `start_date` and `end_date` in the configuration file
 ```bash
 awsm -c awsm.ini
 ```
 
-### Re-run after a model crash
+### Run date range set in the configuration file with the first day not having initialization data
+This command is typically used when running a full water year, where the first day has
+no snow state to initialize from the previous day.
 ```bash
-awsm -c awsm.ini -sd 2024-10-01 --threshold
+awsm -c awsm.ini --no_previous
 ```
+
+### Run a single date
+This command requires initialization data from the previous day and ignores the date
+range specified in the configuration file.
+```bash
+awsm -c awsm.ini -sd 2024-12-01
+```
+
+### Run a single date individually, ignoring the model state from the previous day
+This command will ignore the specified date range in the configuration file and will 
+execute for the given date while not using any initialization data from the previous day.
+Most cases will use this command when running the first day of a new water year.
+```bash
+awsm -c awsm.ini -sd 2024-10-01 --no_previous
+```
+
+### Re-run single date after a model crash
+This will only run iSnobal for the given date and requires all forcing data to be
+prepared (The date range in the configuration file will be ignored). Most cases use 
+this command when the iSnobal crashed and a lower mass threshold value could resolve 
+the issue.
+```bash
+awsm -c awsm.ini -sd 2024-12-01 --threshold
+```
+
 
 ## Help
 ```bash
@@ -53,7 +70,7 @@ optional arguments:
 ```
 
 # Citation
-Each release of AWSM triggers a DOI via Zenodo and 
+Each release of AWSM triggers a DOI via Zenodo and
 [all versions can be found here](https://zenodo.org/search?q=parent.id%3A6543918&f=allversions%3Atrue&l=list&p=1&s=10&sort=version)
 
 DOI for all versions is: https://doi.org/10.5281/zenodo.6543918
