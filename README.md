@@ -14,31 +14,42 @@ The installation of this package provides a command line interface to run the mo
 The command is called `awsm`.
 
 ## Examples
-### Run days set in the configuration file
+### Run date range specified by `start_date` and `end_date` in the configuration file
 ```bash
 awsm -c awsm.ini
 ```
 
-### Run days set in the configuration file with the first day not having initialization data
+### Run date range set in the configuration file with the first day not having initialization data
+This command is typically used when running a full water year, where the first day has
+no snow state to initialize from the previous day.
 ```bash
 awsm -c awsm.ini --no_previous
 ```
 
-### Run a single day
+### Run a single date
+This command requires initialization data from the previous day and ignores the date
+range specified in the configuration file.
 ```bash
-awsm -c awsm.ini -sd 2024-10-01
+awsm -c awsm.ini -sd 2024-12-01
 ```
 
-### Run a single individually, ignoring the model state from the previous day
+### Run a single date individually, ignoring the model state from the previous day
+This command will ignore the specified date range in the configuration file and will 
+execute for the given date while not using any initialization data from the previous day.
+Most cases will use this command when running the first day of a new water year.
 ```bash
 awsm -c awsm.ini -sd 2024-10-01 --no_previous
 ```
 
-### Re-run single day after a model crash
+### Re-run single date after a model crash
+This will only run iSnobal for the given date and requires all forcing data to be
+prepared (The date range in the configuration file will be ignored). Most cases use 
+this command when the iSnobal crashed and a lower mass threshold value could resolve 
+the issue.
 ```bash
-awsm -c awsm.ini -sd 2024-10-01 --threshold
+awsm -c awsm.ini -sd 2024-12-01 --threshold
 ```
-**NOTE**: This will only run iSnobal and requires all forcing data having been prepared successfully.
+
 
 ## Help
 ```bash
