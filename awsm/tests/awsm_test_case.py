@@ -97,10 +97,10 @@ class AWSMTestCase(unittest.TestCase):
             for file_name in self.gold_dir.glob("*.nc")
         ]
 
-    def compare_netcdf_files(self, output_file, variable):
+    def compare_netcdf_files(self, output_file, variable:list):
         """
-        Compare two netcdf files to ensure that they are identical. The
-        tests will compare the attributes of each variable and ensure that
+        Compare two netcdf files to ensure that the list of variables are identical.
+        The tests will also compare the attributes of each variable and ensure that
         the values are exact
         """
 
@@ -111,7 +111,7 @@ class AWSMTestCase(unittest.TestCase):
         test.set_always_mask(False)
 
         # just compare the variable desired with time,x,y
-        variables = ["time", "x", "y", variable]
+        variables = ["time", "x", "y"] + variable
         for var_name in variables:
             # Check attribute existence
             assert var_name in test.variables, (
