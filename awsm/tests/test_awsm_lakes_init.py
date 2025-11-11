@@ -33,59 +33,35 @@ class TestLakesInit(AWSMTestCaseLakes):
 
         run_awsm(cls.run_config, testing=True)
 
-    def test_thickness(self):
-        self.compare_netcdf_files("snow.nc", "thickness")
+    def test_snow_nc(self):
+        self.compare_netcdf_files(
+            "snow.nc",
+            [
+                "thickness",
+                "snow_density",
+                "specific_mass",
+                "liquid_water",
+                "temp_surf",
+                "temp_lower",
+                "temp_snowcover",
+                "thickness_lower",
+                "water_saturation",
+            ],
+        )
 
-    def test_snow_density(self):
-        self.compare_netcdf_files("snow.nc", "snow_density")
-
-    def test_specific_mass(self):
-        self.compare_netcdf_files("snow.nc", "specific_mass")
-
-    def test_liquid_water(self):
-        self.compare_netcdf_files("snow.nc", "liquid_water")
-
-    def test_temp_surf(self):
-        self.compare_netcdf_files("snow.nc", "temp_surf")
-
-    def test_temp_lower(self):
-        self.compare_netcdf_files("snow.nc", "temp_lower")
-
-    def test_temp_snowcover(self):
-        self.compare_netcdf_files("snow.nc", "temp_snowcover")
-
-    def test_thickness_lower(self):
-        self.compare_netcdf_files("snow.nc", "thickness_lower")
-
-    def test_water_saturation(self):
-        self.compare_netcdf_files("snow.nc", "water_saturation")
-
-    def test_net_rad(self):
-        self.compare_netcdf_files("em.nc", "net_rad")
-
-    def test_sensible_heat(self):
-        self.compare_netcdf_files("em.nc", "sensible_heat")
-
-    def test_latent_heat(self):
-        self.compare_netcdf_files("em.nc", "latent_heat")
-
-    def test_snow_soil(self):
-        self.compare_netcdf_files("em.nc", "snow_soil")
-
-    def test_precip_advected(self):
-        self.compare_netcdf_files("em.nc", "precip_advected")
-
-    def test_sum_EB(self):
-        self.compare_netcdf_files("em.nc", "sum_EB")
-
-    def test_evaporation(self):
-        self.compare_netcdf_files("em.nc", "evaporation")
-
-    def test_snowmelt(self):
-        self.compare_netcdf_files("em.nc", "snowmelt")
-
-    def test_SWI(self):
-        self.compare_netcdf_files("em.nc", "SWI")
-
-    def test_cold_content(self):
-        self.compare_netcdf_files("em.nc", "cold_content")
+    def test_em_nc(self):
+        self.compare_netcdf_files(
+            "em.nc",
+            [
+                "net_rad",
+                "sensible_heat",
+                "latent_heat",
+                "snow_soil",
+                "precip_advected",
+                "sum_EB",
+                "evaporation",
+                "snowmelt",
+                "SWI",
+                "cold_content",
+            ],
+        )

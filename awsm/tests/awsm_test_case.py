@@ -97,10 +97,10 @@ class AWSMTestCase(unittest.TestCase):
             for file_name in self.gold_dir.glob("*.nc")
         ]
 
-    def compare_netcdf_files(self, output_file, variable):
+    def compare_netcdf_files(self, output_file, variable:list):
         """
-        Compare two netcdf files to ensure that they are identical. The
-        tests will compare the attributes of each variable and ensure that
+        Compare two netcdf files to ensure that the list of variables are identical.
+        The tests will also compare the attributes of each variable and ensure that
         the values are exact
         """
 
@@ -111,7 +111,7 @@ class AWSMTestCase(unittest.TestCase):
         test.set_always_mask(False)
 
         # just compare the variable desired with time,x,y
-        variables = ["time", "x", "y", variable]
+        variables = ["time", "x", "y"] + variable
         for var_name in variables:
             # Check attribute existence
             assert var_name in test.variables, (
@@ -136,18 +136,26 @@ class AWSMTestCase(unittest.TestCase):
             #       SMRF outputs, the test files started to deviate a lot more
             #       to current gold files through propagation of floating point
             #       differences. This bumped the atol and rtol values up. SMRF PR#10
-            rtol = 0.015
+            tolerances = dict(rtol=0.015, atol=0.01)
             if var_name == "cold_content":
                 # Cold content was the only variable that showed higher magnitude
-                rtol = 0.04
+                tolerances["rtol"] = 0.04
 
-            np.testing.assert_allclose(
-                gold.variables[var_name][:],
-                test.variables[var_name][:],
-                atol=0.01,
-                rtol=rtol,
-                err_msg=f"Variable: {var_name} did not match gold standard",
-            )
+            if var_name == variable:
+                for time_slice in range(len(gold.variables[var_name])):
+                    np.testing.assert_allclose(
+                        gold.variables[var_name][time_slice][time_slice, ...],
+                        test.variables[var_name][time_slice][time_slice, ...],
+                        **tolerances,
+                        err_msg=f"Variable: {var_name} at time slice {time_slice} did not match gold standard",
+                    )
+            else:
+                np.testing.assert_allclose(
+                    gold.variables[var_name][:],
+                    test.variables[var_name][:],
+                    **tolerances,
+                    err_msg=f"Variable: {var_name} did not match gold standard",
+                )
 
         gold.close()
         test.close()
