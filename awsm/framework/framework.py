@@ -92,21 +92,6 @@ class AWSM:
         # iSnobal active layer
         self.active_layer = self.config["grid"]["active_layer"]
 
-        # options for restarting iSnobal
-        self.restart_crash = False
-        self.restart_run = False
-        if self.config.get("isnobal restart", {}).get("restart_crash", False):
-            self.restart_crash = self.config["isnobal restart"]["restart_crash"]
-            self.restart_run = True
-            # self.new_init = self.config['isnobal restart']['new_init']
-            self.depth_thresh = self.config["isnobal restart"]["depth_thresh"]
-            self.restart_hr = int(self.config["isnobal restart"]["wyh_restart_output"])
-            self.restart_folder = self.config["isnobal restart"]["output_folders"]
-            # find restart hour datetime
-            reset_offset = pd.to_timedelta(self.restart_hr, unit="h")
-            # set a new start date for this run
-            self.tmp_log.append("Restart date is {}".format(self.start_date))
-
         # read in update depth parameters
         self.update_depth = self.config.get("update depth", {}).get("update", False)
         if self.update_depth:

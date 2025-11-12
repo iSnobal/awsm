@@ -230,11 +230,7 @@ class StateUpdater():
                 # delete update if not in desired update inputs
                 update_info.pop(un)
 
-        # check if a first run with no update is needed to get us up to the first update
-        if myawsm.restart_crash:
-            test_start_wyhr = myawsm.restart_hr+1
-        else:
-            test_start_wyhr = myawsm.start_wyhr
+        test_start_wyhr = myawsm.start_wyhr
 
         # filter so we are in the dates
         update_info_copy = copy.deepcopy(update_info)
