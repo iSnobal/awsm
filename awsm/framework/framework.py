@@ -99,10 +99,9 @@ class AWSM:
         self.forcing_data_type = self.config.get("ipysnobal", {}).get(
             "forcing_data_type", {}
         )
-        # how often to output form iSnobal
+        # how often to save output form iSnobal
         self.output_freq = self.config["awsm system"]["output_frequency"]
-        # number of timesteps to run if ou don't want to run the whole thing
-        self.run_for_nsteps = self.config["awsm system"]["run_for_nsteps"]
+
         # pysnobal output variables
         self.pysnobal_output_vars = self.config["awsm system"]["variables"]
         self.pysnobal_output_vars = [wrd.lower() for wrd in self.pysnobal_output_vars]

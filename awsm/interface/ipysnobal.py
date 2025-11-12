@@ -442,11 +442,6 @@ class PySnobal:
         for self.step_index, self.time_step in enumerate(self.date_time, 1):
             self.run_full_timestep()
 
-            # if input has run_for_nsteps, make sure not to go past it
-            if self.awsm.run_for_nsteps is not None:
-                if self.step_index > self.awsm.run_for_nsteps:
-                    break
-
         # close input files
         if self.awsm.forcing_data_type == "netcdf":
             self.awsm.smrf_connector.close_netcdf_files()
