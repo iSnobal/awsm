@@ -114,9 +114,9 @@ class PySnobal:
         self.time_step_info[ipysnobal.MEDIUM_TSTEP]["threshold"] = (
             self.awsm.mass_thresh[1]
         )
-        self.time_step_info[ipysnobal.SMALL_TSTEP]["threshold"] = self.awsm.mass_thresh[
-            2
-        ]
+        self.time_step_info[ipysnobal.SMALL_TSTEP]["threshold"] = (
+            self.awsm.mass_thresh[2]
+        )
 
         # get init params
         self.init = self.awsm.model_init.init
@@ -131,7 +131,7 @@ class PySnobal:
         )
 
         self.time_since_out = 0.0
-        self.start_step = 0  # if restart then it would be higher
+        self.start_step = 0
         step_time = self.start_step * self.data_time_step
 
         self.set_current_time(step_time, self.time_since_out)
@@ -183,13 +183,9 @@ class PySnobal:
                 """of 60 min (whole hours)"""
             )
 
-        # read in the start date and end date
-        if self.awsm.restart_run:
-            start_date = self.awsm.restart_date
-        else:
-            start_date = self.awsm.start_date
+        start_date = self.awsm.start_date
 
-        # create a date time vector
+        # create a date time range
         date_time = list(
             pd.date_range(
                 start_date,
@@ -328,7 +324,9 @@ class PySnobal:
 
         if rt != -1:
             raise ValueError(
-                "ipysnobal error on time step {}, pixel {}".format(self.time_step, rt)
+                "ipysnobal error on time step {}, pixel {}".format(
+                    self.time_step, rt
+                )
             )
 
     def run_full_timestep(self):
@@ -338,7 +336,9 @@ class PySnobal:
         outputting the results if needed.
         """
 
-        self._logger.info("running iPysnobal for timestep: {}".format(self.time_step))
+        self._logger.info(
+            "running iPysnobal for timestep: {}".format(self.time_step)
+        )
 
         self.input2 = self.get_timestep_inputs()
 
@@ -351,7 +351,9 @@ class PySnobal:
 
         self.output_timestep()
 
-        self._logger.info("Finished iPysnobal timestep: {}".format(self.time_step))
+        self._logger.info(
+            "Finished iPysnobal timestep: {}".format(self.time_step)
+        )
 
     def output_timestep(self):
         """
@@ -361,9 +363,9 @@ class PySnobal:
         Also saves the output of the last time step for reinitialization
         when started the next time.
         """
-        out_freq = (self.time_step.hour * self.data_time_step / 3600.0) % self.options[
-            "output"
-        ]["frequency"] == 0
+        out_freq = (
+            self.time_step.hour * self.data_time_step / 3600.0
+        ) % self.options["output"]["frequency"] == 0
 
         last_time_step = self.time_step == self.date_time[-1]
 
@@ -413,7 +415,10 @@ class PySnobal:
         """
         self._logger.info("  * Getting inputs for first timestep")
 
-        if self.date_time[0].hour == 0 and self.awsm.model_init.init_file is not None:
+        if (
+            self.date_time[0].hour == 0
+            and self.awsm.model_init.init_file is not None
+        ):
             self._logger.debug("  => from previous day")
             self.load_previous_day()
             # Open the files for all future time steps
@@ -437,15 +442,12 @@ class PySnobal:
 
         self.initialize_updater()
 
-        self._logger.info(f"Starting PySnobal for {len(self.date_time)} time steps")
+        self._logger.info(
+            f"Starting PySnobal for {len(self.date_time)} time steps"
+        )
 
         for self.step_index, self.time_step in enumerate(self.date_time, 1):
             self.run_full_timestep()
-
-            # if input has run_for_nsteps, make sure not to go past it
-            if self.awsm.run_for_nsteps is not None:
-                if self.step_index > self.awsm.run_for_nsteps:
-                    break
 
         # close input files
         if self.awsm.forcing_data_type == "netcdf":

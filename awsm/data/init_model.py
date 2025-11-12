@@ -15,7 +15,6 @@ Outline
 
 -get_init_file:
     --reads in the specific init file and stores init fields in dictionary
-    --checks if restarting from a crash, in which casse init file is not used
     --if no file then make the necessary 0 start file
 
 -write_init:
@@ -68,13 +67,6 @@ class ModelInit:
         self.model_type = cfg["awsm master"]["model_type"]
         # paths
         self.path_output = path_output
-        # restart parameters
-
-        self.restart_crash = cfg.get("isnobal restart", {}).get("restart_crash", False)
-        if self.restart_crash:
-            self.restart_hr = cfg["isnobal restart"]["wyh_restart_output"]
-            self.depth_thresh = cfg["isnobal restart"]["depth_thresh"]
-            self.restart_folder = cfg["isnobal restart"]["output_folders"]
 
         # dictionary to store init data
         self.init = {}
@@ -101,58 +93,14 @@ class ModelInit:
         Get the necessary data from the init.
         This will check the model type and the init file and act accordingly.
         """
-        # get crash restart if restart_crash
-        if self.restart_crash:
-            self.get_crash_init()
         # if we have no init info, make zero init
-        elif self.init_file is None:
+        if self.init_file is None:
             self.get_zero_init()
         # get init depending on file type
         elif self.init_type == "netcdf":
             self.get_netcdf()
         elif self.init_type == "netcdf_out":
             self.get_netcdf_out()
-
-    def get_crash_init(self):
-        """
-        Initializes simulation variables for special case when restarting a
-        crashed run. Zeros depth under specified threshold and zeros other
-        snow parameters that must be dealt with when depth is set to zero.
-
-        Modifies:
-            init:    dictionary of initialized variables
-        """
-
-        self.init_type = "netcdf_out"
-        # find the correct output folder from which to restart
-        if self.restart_folder == "standard":
-            self.init_file = os.path.join(self.path_output, "snow.nc")
-
-        elif self.restart_folder == "daily":
-            fmt = "%Y%m%d"
-            # get the date string
-            day_str = self.path_output[-8:]
-            day_dt = pd.to_datetime(day_str) - pd.to_timedelta(1, unit="days")
-            day_dt_str = day_dt.strftime(fmt)
-            # get the previous day
-            path_prev_day = os.path.join(self.path_output, "..", "run" + day_dt_str)
-            self.init_file = os.path.join(path_prev_day, "snow.nc")
-
-        self.get_netcdf_out()
-
-        # zero depths under specified threshold
-        restart_var = self.zero_crash_depths(
-            self.depth_thresh,
-            self.init["z_s"],
-            self.init["rho"],
-            self.init["T_s_0"],
-            self.init["T_s_l"],
-            self.init["T_s"],
-            self.init["h2o_sat"],
-        )
-        # put variables back in init dictionary
-        for k, v in restart_var.items():
-            self.init[k] = v
 
     def get_zero_init(self):
         """
@@ -204,10 +152,15 @@ class ModelInit:
         ds = xr.open_dataset(self.init_file)
 
         # Xarray needs a timezone naive object for selecting
-        init_data = ds.sel(time=self.start_date.replace(tzinfo=None), method="nearest")
+        init_data = ds.sel(
+            time=self.start_date.replace(tzinfo=None), method="nearest"
+        )
         time_diff = self.start_date.tz_localize(None) - init_data.time.values
 
-        if time_diff.total_seconds() < 0 or time_diff.total_seconds() > 24 * 3600:
+        if (
+            time_diff.total_seconds() < 0
+            or time_diff.total_seconds() > 24 * 3600
+        ):
             self._logger.error(
                 "No time in restart file that is within a day of restart time"
             )
@@ -226,51 +179,3 @@ class ModelInit:
         self.init["h2o_sat"] = init_data.water_saturation.values
 
         ds.close()
-
-    def zero_crash_depths(self, depth_thresh, z_s, rho, T_s_0, T_s_l, T_s, h2o_sat):
-        """
-        Zero snow depth under certain threshold and deal with associated variables.
-
-        Args:
-            depth_thresh: threshold in mm depth to zero
-            z_s:    snow depth (Numpy array)
-            rho:    snow density (Numpy array)
-            T_s_0:  surface layer temperature (Numpy array)
-            T_s_l:  lower layer temperature (Numpy array)
-            T_s:    average snow cover temperature (Numpy array)
-            h2o_sat: percent liquid h2o saturation (Numpy array)
-
-        Returns:
-            restart_var: dictionary of input variables after correction
-        """
-
-        # find pixels that need reset
-        idz = z_s < depth_thresh
-
-        # find number of pixels reset
-        num_pix = len(np.where(idz)[0])
-        num_pix_tot = z_s.size
-
-        self._logger.warning(
-            "Zeroing depth in pixels lower than {} [m]".format(depth_thresh)
-        )
-        self._logger.warning(
-            "Zeroing depth in {} out of {} total pixels".format(num_pix, num_pix_tot)
-        )
-
-        z_s[idz] = 0.0
-        rho[idz] = 0.0
-        T_s_0[idz] = -75.0
-        T_s_l[idz] = -75.0
-        T_s[idz] = -75.0
-        h2o_sat[idz] = 0.0
-
-        restrat_var = {}
-        restrat_var["z_s"] = z_s
-        restrat_var["rho"] = rho
-        restrat_var["T_s_0"] = T_s_0
-        restrat_var["T_s_l"] = T_s_l
-        restrat_var["T_s"] = T_s
-        restrat_var["h2o_sat"] = h2o_sat
-
-        return restrat_var

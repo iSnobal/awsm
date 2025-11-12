@@ -59,31 +59,12 @@ class AWSM:
         # ################## Decide which modules to run #####################
         self.do_smrf = self.config["awsm master"]["run_smrf"]
         self.model_type = self.config["awsm master"]["model_type"]
-        self.do_forecast = False
-        if "gridded" in self.config and self.do_smrf:
-            # self.do_forecast = self.config['gridded']['hrrr_forecast_flag']
-
-            # WARNING: The value here is inferred in SMRF.data.loadGrid. A
-            # change here requires a change there
-            self.n_forecast_hours = 18
 
         # options for masking isnobal
         self.mask_isnobal = self.config["awsm master"]["mask_isnobal"]
 
         # store smrf version if running smrf
         self.smrf_version = smrf.__version__
-
-        if self.do_forecast:
-            self.tmp_log.append("Forecasting set to True")
-
-            # self.fp_forecastdata = self.config['gridded']['wrf_file']
-            # if self.fp_forecastdata is None:
-            #     self.tmp_err.append('Forecast set to true, '
-            #                         'but no grid file given')
-            #     print("Errors in the config file. See configuration "
-            #           "status report above.")
-            #     print(self.tmp_err)
-            #     sys.exit()
 
         # Time step mass thresholds for iSnobal
         self.mass_thresh = []
@@ -99,10 +80,9 @@ class AWSM:
         self.forcing_data_type = self.config.get("ipysnobal", {}).get(
             "forcing_data_type", {}
         )
-        # how often to output form iSnobal
+        # how often to save output form iSnobal
         self.output_freq = self.config["awsm system"]["output_frequency"]
-        # number of timesteps to run if ou don't want to run the whole thing
-        self.run_for_nsteps = self.config["awsm system"]["run_for_nsteps"]
+
         # pysnobal output variables
         self.pysnobal_output_vars = self.config["awsm system"]["variables"]
         self.pysnobal_output_vars = [wrd.lower() for wrd in self.pysnobal_output_vars]
@@ -111,21 +91,6 @@ class AWSM:
         self.em_name = self.config["awsm system"]["em_name"]
         # iSnobal active layer
         self.active_layer = self.config["grid"]["active_layer"]
-
-        # options for restarting iSnobal
-        self.restart_crash = False
-        self.restart_run = False
-        if self.config.get("isnobal restart", {}).get("restart_crash", False):
-            self.restart_crash = self.config["isnobal restart"]["restart_crash"]
-            self.restart_run = True
-            # self.new_init = self.config['isnobal restart']['new_init']
-            self.depth_thresh = self.config["isnobal restart"]["depth_thresh"]
-            self.restart_hr = int(self.config["isnobal restart"]["wyh_restart_output"])
-            self.restart_folder = self.config["isnobal restart"]["output_folders"]
-            # find restart hour datetime
-            reset_offset = pd.to_timedelta(self.restart_hr, unit="h")
-            # set a new start date for this run
-            self.tmp_log.append("Restart date is {}".format(self.start_date))
 
         # read in update depth parameters
         self.update_depth = self.config.get("update depth", {}).get("update", False)
@@ -267,16 +232,6 @@ class AWSM:
         # setup the logging
         logfile = None
         if self.config["awsm system"]["log_to_file"]:
-            # if self.config['isnobal restart']['restart_crash']:
-            #     logfile = \
-            #         os.path.join(self.path_log,
-            #                      'log_restart_{}.out'.format(self.restart_hr))
-            # elif self.do_forecast:
-            #     logfile = \
-            #         os.path.join(self.path_log,
-            #                      'log_forecast_'
-            #                      '{}.out'.format(self.folder_date_stamp))
-            # else:
             logfile = os.path.join(
                 self.path_log, "log_{}.out".format(self.folder_date_stamp)
             )
