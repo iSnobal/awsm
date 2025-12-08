@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/UofU-Cryosphere/awsm"
+Homepage = "https://github.com/iSnobal/awsm"
 
 [project.scripts]
 awsm = "awsm.cli:main"
