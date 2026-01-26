@@ -8,6 +8,7 @@ from awsm.interface import pysnobal_io
 from awsm.interface.ingest_data import StateUpdater
 from awsm.interface.smrf_connector import SMRFConnector
 from pysnobal import ipysnobal
+from pysnobal import defaults
 from pysnobal.c_snobal import snobal
 
 C_TO_K = 273.16
@@ -108,13 +109,13 @@ class PySnobal:
         )
 
         # mass thresholds for run time steps
-        self.time_step_info[ipysnobal.NORMAL_TIMESTEP]["threshold"] = (
+        self.time_step_info[defaults.NORMAL_TIMESTEP]["threshold"] = (
             self.awsm.mass_thresh[0]
         )
-        self.time_step_info[ipysnobal.MEDIUM_TIMESTEP]["threshold"] = (
+        self.time_step_info[defaults.MEDIUM_TIMESTEP]["threshold"] = (
             self.awsm.mass_thresh[1]
         )
-        self.time_step_info[ipysnobal.SMALL_TIMESTEP]["threshold"] = (
+        self.time_step_info[defaults.SMALL_TIMESTEP]["threshold"] = (
             self.awsm.mass_thresh[2]
         )
 
