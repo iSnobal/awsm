@@ -28,7 +28,7 @@ jobs:
       GCC_VERSION: 11
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Linux
         if: runner.os == 'Linux'
