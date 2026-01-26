@@ -36,19 +36,8 @@ jobs:
         run: |
           wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/isnobal.yaml
 
-      - name: Cache GCC ${{ env.GCC_VERSION }} installation
-        id: cache-gcc
-        uses: actions/cache@v4
-        with:
-          key: gcc-${{ env.GCC_VERSION }}-${{ runner.os }}
-          path: |
-            /usr/bin/gcc
-            /usr/bin/g++
-            /usr/bin/gcc-${{ env.GCC_VERSION }}
-            /usr/bin/g++-${{ env.GCC_VERSION }}
-
       - name: Install and set GCC as default on Ubuntu
-        if: runner.os == 'Linux' && steps.cache-gcc.outputs.cache-hit != 'false'
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-${{ env.GCC_VERSION }} g++-${{ env.GCC_VERSION }}
@@ -71,3 +60,4 @@ jobs:
         run: |
           micromamba run -n isnobal make install
           micromamba run -n isnobal make tests
+
