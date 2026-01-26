@@ -16,6 +16,10 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   unittest:
     strategy:
@@ -81,4 +85,3 @@ jobs:
         run: |
           micromamba run -n isnobal make install
           micromamba run -n isnobal make tests
-
