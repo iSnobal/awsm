@@ -21,8 +21,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Disable OS X until a user has run unittests locally
-        # os: [ ubuntu-latest, macos-latest ]
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os }}
     env:
@@ -32,13 +30,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Download environment file
-        run: |
-          wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/isnobal.yaml
-
-      - name: Install and set GCC as default on Ubuntu
+      - name: Setup Linux
         if: runner.os == 'Linux'
         run: |
+          # Download environment file
+          wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/isnobal_linux.yaml
+          # Install GCC
           sudo apt-get update
           sudo apt-get install -y gcc-${{ env.GCC_VERSION }} g++-${{ env.GCC_VERSION }}
           # Update alternatives for system-wide default
@@ -51,10 +48,10 @@ jobs:
 
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: isnobal.yaml
+          environment-file: isnobal_linux.yaml
           init-shell: bash
           cache-environment: true
-          cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles('isnobal.yaml') }}
+          cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles('isnobal_linux.yaml') }}
 
       - name: Run unittests
         run: |
