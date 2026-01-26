@@ -21,12 +21,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     env:
-      CC: gcc-11
       GCC_VERSION: 11
       LINUX_YAML: isnobal_linux.yaml
+      MACOS_YAML: isnobal_macOS.yaml
 
     steps:
       - uses: actions/checkout@v6
@@ -47,12 +47,35 @@ jobs:
           g++ --version
         shell: bash
 
-      - uses: mamba-org/setup-micromamba@v2
+      - name: Setup Mac OS
+        if: runner.os == 'macOS'
+        run: |
+          # Download environment file
+          wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/${{ env.MACOS_YAML }}
+        shell: bash
+
+      - name: Setup micromamba (Linux)
+        if: runner.os == 'Linux'
+        env:
+          CC: gcc-${{ env.GCC_VERSION }}
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: ${{ env.LINUX_YAML }}
           init-shell: bash
           cache-environment: true
           cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.LINUX_YAML) }}
+
+      - name: Setup micromamba (macOS)
+        if: runner.os == 'macOS'
+        env:
+          CONDA_SUBDIR: osx-64
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: ${{ env.MACOS_YAML }}
+          init-shell: bash
+          cache-environment: true
+          cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.MACOS_YAML) }}
+
 
       - name: Run unittests
         run: |
