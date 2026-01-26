@@ -26,6 +26,7 @@ jobs:
     env:
       CC: gcc-11
       GCC_VERSION: 11
+      LINUX_YAML: isnobal_linux.yaml
 
     steps:
       - uses: actions/checkout@v6
@@ -34,7 +35,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           # Download environment file
-          wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/isnobal_linux.yaml
+          wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/${{ env.LINUX_YAML }}
           # Install GCC
           sudo apt-get update
           sudo apt-get install -y gcc-${{ env.GCC_VERSION }} g++-${{ env.GCC_VERSION }}
@@ -48,10 +49,10 @@ jobs:
 
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: isnobal_linux.yaml
+          environment-file: ${{ env.LINUX_YAML }}
           init-shell: bash
           cache-environment: true
-          cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles('isnobal_linux.yaml') }}
+          cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.LINUX_YAML) }}
 
       - name: Run unittests
         run: |
