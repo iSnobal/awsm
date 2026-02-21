@@ -1,3 +1,8 @@
+try:
+       from ..interface import default_connector as DefaultConnector
+except ImportError:
+        from awsm.interface.smrf_connector import SMRFConnector as DefaultConnector
+
 import logging
 import os
 import sys
@@ -118,7 +123,8 @@ class AWSM:
         # create log now that directory structure is done
         # self.create_log()
 
-        self.smrf_connector = SMRFConnector(self)
+        # self.smrf_connector = SMRFConnector(self)
+        self.smrf_connector = DefaultConnector(self)
 
         # if we have a model, initialize it
         if self.model_type is not None:
