@@ -10,7 +10,7 @@ The project follows a standard Python package structure:
   - `framework/`: Core logic for model execution and flow control.
   - `interface/`: Adapters and wrappers for `pysnobal` and `SMRF`.
   - `data/`: Default configuration files and static resources.
-  - `awsm/tests/`: Unit and integration tests.
+  - `tests/`: Unit and integration tests.
 - `docs/`: Sphinx documentation and configuration.
 - `notebooks/`: Jupyter notebooks for analysis and demonstrations.
 - `scripts/`: Helper scripts for deployment or data processing.
