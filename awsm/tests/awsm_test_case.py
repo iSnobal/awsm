@@ -19,28 +19,11 @@ class AWSMTestCase(unittest.TestCase):
     Runs the short simulation over reynolds mountain east
     """
 
-    DIST_VARIABLES = frozenset(
-        [
-            "air_temp",
-            "cloud_factor",
-            "precip",
-            "thermal",
-            "vapor_pressure",
-            "wind",
-        ]
-    )
-
     BASE_INI_FILE_NAME = "config.ini"
 
     test_dir = Path(awsm.__file__).parent.joinpath("tests")
     basin_dir = test_dir.joinpath("basins", "RME")
     config_file = os.path.join(basin_dir, BASE_INI_FILE_NAME)
-
-    @property
-    def dist_variables(self):
-        if self._dist_variables is None:
-            self._dist_variables = list(self.DIST_VARIABLES)
-        return self._dist_variables
 
     @property
     def base_config(self):
@@ -84,9 +67,6 @@ class AWSMTestCase(unittest.TestCase):
     def remove_output_dir(cls):
         if hasattr(cls, "output_dir") and os.path.exists(cls.output_dir):
             shutil.rmtree(cls.output_dir)
-
-    def setUp(self):
-        self._dist_variables = None
 
     def compare_hrrr_gold(self):
         """
