@@ -20,6 +20,7 @@ FREEZE = C_TO_K
 def K_TO_C(x):
     return x - FREEZE
 
+
 def create_netCDF(
     filename: Path, start_date: datetime, init: dict, myawsm
 ) -> nc.Dataset:
@@ -55,11 +56,9 @@ def create_netCDF(
     netcdf_file.createDimension("x", len(init["x"]))
 
     # Variables for dimensions
-    time = netcdf_file.createVariable(
-        "time", "f4", DIMENSIONS[0], **COMPRESSION
-    )  # type: ignore
-    x = netcdf_file.createVariable("y", "f4", DIMENSIONS[1], **COMPRESSION)  # type: ignore
-    y = netcdf_file.createVariable("x", "f4", DIMENSIONS[2], **COMPRESSION)  # type: ignore
+    time = netcdf_file.createVariable("time", "f4", DIMENSIONS[0], **COMPRESSION)
+    x = netcdf_file.createVariable("y", "f4", DIMENSIONS[1], **COMPRESSION)
+    y = netcdf_file.createVariable("x", "f4", DIMENSIONS[2], **COMPRESSION)
 
     time.units = "hours since %s" % start_date.tz_localize(None)
     time.time_zone = str(myawsm.tzinfo).lower()
@@ -158,9 +157,7 @@ def output_files(options, init, start_date, myawsm):
         ],
     }
 
-    file_path = os.path.join(
-        options["output"]["location"], myawsm.em_name + ".nc"
-    )
+    file_path = os.path.join(options["output"]["location"], myawsm.em_name + ".nc")
     em = create_netCDF(file_path, start_date, init, myawsm)
     create_variables(em, em_variables, myawsm)
 
@@ -207,9 +204,7 @@ def output_files(options, init, start_date, myawsm):
         ],
     }
 
-    file_path = os.path.join(
-        options["output"]["location"], myawsm.snow_name + ".nc"
-    )
+    file_path = os.path.join(options["output"]["location"], myawsm.snow_name + ".nc")
     snow = create_netCDF(file_path, start_date, init, myawsm)
     create_variables(snow, snow_variables, myawsm)
 
