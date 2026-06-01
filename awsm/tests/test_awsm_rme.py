@@ -4,7 +4,7 @@ from awsm.tests.awsm_test_case import AWSMTestCase
 
 class TestRME(AWSMTestCase):
     """
-    Testing using RME
+    Testing over Reynolds Mountain East (RME)
     """
 
     @classmethod
