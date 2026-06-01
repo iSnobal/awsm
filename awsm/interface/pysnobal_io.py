@@ -10,6 +10,7 @@ from spatialnc.proj import add_proj
 # NetCDF file parameters
 COMPRESSION = dict(compression="zlib", complevel=4)
 DIMENSIONS = ("time", "y", "x")
+LEAST_SIGNIFICANT_DIGITS = 4
 
 C_TO_K = 273.16
 FREEZE = C_TO_K
@@ -99,8 +100,8 @@ def create_variables(netcdf_file: nc.Dataset, variables: dict, myawsm):
                 "f4",
                 DIMENSIONS,
                 **COMPRESSION,
-                least_significant_digit=4,
-            )  # type: ignore
+                least_significant_digit=LEAST_SIGNIFICANT_DIGITS,
+            )
             nc_variable.units = variables["units"][index]
             nc_variable.description = variables["description"][index]
 
