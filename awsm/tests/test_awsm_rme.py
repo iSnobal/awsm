@@ -17,7 +17,7 @@ class TestRME(AWSMTestCase):
             "output/rme/wy1986/rme_test/run19860217_19860217"
         )
 
-        run_awsm(cls.run_config, testing=True)
+        run_awsm(cls.run_config)
 
     def test_snow_nc(self):
         self.compare_netcdf_files(

@@ -26,7 +26,7 @@ class TestPySnobal(AWSMTestCaseLakes):
 
         self.run_config.apply_recipes()
         run_config = cast_all_variables(self.run_config, self.run_config.mcfg)
-        awsm_run = AWSM(run_config, testing=True)
+        awsm_run = AWSM(run_config)
         self.subject = PySnobal(awsm_run)
         self.subject.initialize_ipysnobal()
 
