@@ -14,16 +14,19 @@ import awsm
 class AWSMTestCase(unittest.TestCase):
     """
     The base test case for AWSM that will load in the configuration file
-    and store as the base config. Also will remove the output
-    directory upon tear down.
-    Runs the short simulation over reynolds mountain east
+    and store as the base config. Also removes the output directory upon tear down.
     """
+
+    # This matches the significant digits set in output files.
+    # See :data:`awsm.interface.pysnobal_io.LEAST_SIGNIFICANT_DIGITS`
+    VARIABLE_TOLERANCE = 0.0001
 
     BASE_INI_FILE_NAME = "config.ini"
 
     test_dir = Path(awsm.__file__).parent.joinpath("tests")
     basin_dir = test_dir.joinpath("basins", "RME")
     config_file = os.path.join(basin_dir, BASE_INI_FILE_NAME)
+    netcdf_comparison_failed = False
 
     @property
     def base_config(self):
@@ -52,6 +55,10 @@ class AWSMTestCase(unittest.TestCase):
         cls.remove_output_dir()
         delattr(cls, "output_dir")
 
+    def setUp(self):
+        super().setUp()
+        self.__class__.netcdf_comparison_failed = False
+
     @classmethod
     def create_output_dir(cls):
         folder = os.path.join(cls._base_config.cfg["paths"]["path_dr"])
@@ -65,19 +72,11 @@ class AWSMTestCase(unittest.TestCase):
 
     @classmethod
     def remove_output_dir(cls):
-        if hasattr(cls, "output_dir") and os.path.exists(cls.output_dir):
-            shutil.rmtree(cls.output_dir)
+        if not cls.netcdf_comparison_failed:
+            if hasattr(cls, "output_dir") and os.path.exists(cls.output_dir):
+                shutil.rmtree(cls.output_dir, ignore_errors=True)
 
-    def compare_hrrr_gold(self):
-        """
-        Compare the model results with the gold standard
-        """
-        [
-            self.compare_netcdf_files(file_name.name)
-            for file_name in self.gold_dir.glob("*.nc")
-        ]
-
-    def compare_netcdf_files(self, output_file, variable:list):
+    def compare_netcdf_files(self, output_file, variable: list):
         """
         Compare two netcdf files to ensure that the list of variables are identical.
         The tests will also compare the attributes of each variable and ensure that
@@ -90,52 +89,47 @@ class AWSMTestCase(unittest.TestCase):
         test = nc.Dataset(self.output_path.joinpath(output_file))
         test.set_always_mask(False)
 
-        # just compare the variable desired with time,x,y
-        variables = ["time", "x", "y"] + variable
-        for var_name in variables:
-            # Check attribute existence
-            assert var_name in test.variables, (
-                f"Variable: {var_name} not found in test output file"
-            )
-
-            # Compare the dimensions of gold are still in the tests
-            # The test will have 'description' and 'long_name' additionally
-            self.assertTrue(
-                np.all(
-                    np.isin(
-                        gold.variables[var_name].ncattrs(),
-                        test.variables[var_name].ncattrs(),
-                    )
-                ),
-                "Missing variable attribute. "
-                f" Gold: {gold.variables[var_name].ncattrs()}"
-                f" Test: {test.variables[var_name].ncattrs()}",
-            )
-
-            # Note: With the change to only store four significant digits for
-            #       SMRF outputs, the test files started to deviate a lot more
-            #       to current gold files through propagation of floating point
-            #       differences. This bumped the atol and rtol values up. SMRF PR#10
-            tolerances = dict(rtol=0.015, atol=0.01)
-            if var_name == "cold_content":
-                # Cold content was the only variable that showed higher magnitude
-                tolerances["rtol"] = 0.04
-
-            if var_name == variable:
-                for time_slice in range(len(gold.variables[var_name])):
-                    np.testing.assert_allclose(
-                        gold.variables[var_name][time_slice][time_slice, ...],
-                        test.variables[var_name][time_slice][time_slice, ...],
-                        **tolerances,
-                        err_msg=f"Variable: {var_name} at time slice {time_slice} did not match gold standard",
-                    )
-            else:
-                np.testing.assert_allclose(
-                    gold.variables[var_name][:],
-                    test.variables[var_name][:],
-                    **tolerances,
-                    err_msg=f"Variable: {var_name} did not match gold standard",
+        try:
+            # Just compare the variable desired with time,x,y
+            variables = ["time", "x", "y"] + variable
+            for var_name in variables:
+                # Check attribute existence
+                assert var_name in test.variables, (
+                    f"Variable: {var_name} not found in test output file"
                 )
 
-        gold.close()
-        test.close()
+                # Compare the dimensions of gold are still in the tests
+                # The test will have 'description' and 'long_name' additionally
+                self.assertTrue(
+                    np.all(
+                        np.isin(
+                            gold.variables[var_name].ncattrs(),
+                            test.variables[var_name].ncattrs(),
+                        )
+                    ),
+                    "Missing variable attribute. "
+                    f" Gold: {gold.variables[var_name].ncattrs()}"
+                    f" Test: {test.variables[var_name].ncattrs()}",
+                )
+
+                if var_name == variable:
+                    for time_slice in range(len(gold.variables[var_name])):
+                        np.testing.assert_allclose(
+                            gold.variables[var_name][time_slice, ...],
+                            test.variables[var_name][time_slice, ...],
+                            rtol=self.VARIABLE_TOLERANCE,
+                            err_msg=f"Variable: {var_name} at time slice {time_slice} did not match gold standard",
+                        )
+                else:
+                    np.testing.assert_allclose(
+                        gold.variables[var_name][:],
+                        test.variables[var_name][:],
+                        rtol=self.VARIABLE_TOLERANCE,
+                        err_msg=f"Variable: {var_name} did not match gold standard",
+                    )
+        except AssertionError:
+            self.__class__.netcdf_comparison_failed = True
+            raise
+        finally:
+            gold.close()
+            test.close()
