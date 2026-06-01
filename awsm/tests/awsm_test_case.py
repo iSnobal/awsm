@@ -76,11 +76,24 @@ class AWSMTestCase(unittest.TestCase):
             if hasattr(cls, "output_dir") and os.path.exists(cls.output_dir):
                 shutil.rmtree(cls.output_dir, ignore_errors=True)
 
-    def compare_netcdf_files(self, output_file, variable: list):
+    def compare_netcdf_files(self, output_file, output_variables: list) -> None:
         """
         Compare two netcdf files to ensure that the list of variables are identical.
         The tests will also compare the attributes of each variable and ensure that
         the values are exact
+
+        Args:
+            output_file : str
+                The name of the NetCDF file to compare.
+            output_variables : list
+                The list of variable names in the NetCDF file to compare beyond the default
+                variables ("time", "x", "y").
+
+        Raises
+        ------
+        AssertionError
+            If a mismatch is detected between the gold standard and the test file,
+            including missing variables, missing attributes, and value mismatches.
         """
 
         gold = nc.Dataset(self.gold_dir.joinpath(output_file))
@@ -90,16 +103,13 @@ class AWSMTestCase(unittest.TestCase):
         test.set_always_mask(False)
 
         try:
-            # Just compare the variable desired with time,x,y
-            variables = ["time", "x", "y"] + variable
+            variables = ["time", "x", "y"] + output_variables
             for var_name in variables:
                 # Check attribute existence
                 assert var_name in test.variables, (
                     f"Variable: {var_name} not found in test output file"
                 )
 
-                # Compare the dimensions of gold are still in the tests
-                # The test will have 'description' and 'long_name' additionally
                 self.assertTrue(
                     np.all(
                         np.isin(
@@ -112,7 +122,8 @@ class AWSMTestCase(unittest.TestCase):
                     f" Test: {test.variables[var_name].ncattrs()}",
                 )
 
-                if var_name == variable:
+                # Only compare the actual values and not the dimensions
+                if var_name in output_variables:
                     for time_slice in range(len(gold.variables[var_name])):
                         np.testing.assert_allclose(
                             gold.variables[var_name][time_slice, ...],
@@ -120,13 +131,6 @@ class AWSMTestCase(unittest.TestCase):
                             rtol=self.VARIABLE_TOLERANCE,
                             err_msg=f"Variable: {var_name} at time slice {time_slice} did not match gold standard",
                         )
-                else:
-                    np.testing.assert_allclose(
-                        gold.variables[var_name][:],
-                        test.variables[var_name][:],
-                        rtol=self.VARIABLE_TOLERANCE,
-                        err_msg=f"Variable: {var_name} did not match gold standard",
-                    )
         except AssertionError:
             self.__class__.netcdf_comparison_failed = True
             raise
