@@ -35,7 +35,7 @@ class AWSM:
 
     DATE_FOLDER_FORMAT = "%Y%m%d"
 
-    def __init__(self, config, testing=False):
+    def __init__(self, config):
         """
         Initialize the model, read config file, start and end date, and logging
         Args:
@@ -43,7 +43,6 @@ class AWSM:
                 instance
         """
 
-        self.testing = testing
         self.read_config(config)
 
         # create blank log and error log because logger is not initialized yet
@@ -169,8 +168,6 @@ class AWSM:
             print_config_report(warnings, errors)
             print("Errors in the config file. See configuration status report above.")
             sys.exit()
-        elif len(warnings) > 0 and not self.testing:
-            print_config_report(warnings, errors)
 
         self.config = self.ucfg.cfg
 
@@ -378,7 +375,7 @@ class AWSM:
         self._logger.info("AWSM closed --> %s" % datetime.now())
 
 
-def run_awsm(config, testing=False):
+def run_awsm(config):
     """
     Function that runs awsm how it should be operate for full runs.
 
@@ -388,7 +385,7 @@ def run_awsm(config, testing=False):
             from to 32-bit then 64-bit to mimic writing the data to a
             netcdf. This enables a single set of gold files.
     """
-    with AWSM(config, testing) as a:
+    with AWSM(config) as a:
         if a.do_smrf:
             a.run_smrf()
 

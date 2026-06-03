@@ -10,6 +10,7 @@ awsm/version.py
 .DS_Store
 ._.*
 test_data/stoporad.ip
+.virtual_documents/
 
 *.lprof
 *.prof

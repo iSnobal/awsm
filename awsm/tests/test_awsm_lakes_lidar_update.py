@@ -1,4 +1,5 @@
 import os
+
 from inicheck.tools import cast_all_variables
 
 from awsm.framework.framework import run_awsm
@@ -45,7 +46,7 @@ class TestLakesLidarUpdate(AWSMTestCaseLakes):
             "output/lakes/wy2020/lakes_gold/run20191001_20191001"
         )
 
-        run_awsm(cls.run_config, testing=True)
+        run_awsm(cls.run_config)
 
     def test_snow_nc(self):
         self.compare_netcdf_files(
