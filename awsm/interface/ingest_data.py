@@ -155,8 +155,9 @@ class StateUpdater():
         ds.set_always_mask(False)
 
         # get all depths, x, y, time
-        D_all = ds.variables['depth'][:]
-        D_all = D_all.filled(fill_value=np.nan)
+        D_all = ds.variables["depth"][:]
+        # PySnobal expects depths to be passed as double.
+        D_all = D_all.filled(fill_value=np.nan).astype(np.float64, order="C")
         D_all[np.isinf(D_all)] = np.nan
         D_all[D_all > 200.0] = np.nan
         if np.any(D_all) > 100:
