@@ -3,11 +3,11 @@ name: Test Base
 on:
   workflow_call:
     inputs:
-      smrf_ref:
-        description: Optional SMRF git ref to install before running AWSM tests
+      latest:
+        description: Optional git ref to install latest for pysnobal and SMRF before running AWSM tests
         required: false
         type: string
-        default: ''
+        default: ""
 
 permissions:
   contents: read
@@ -72,14 +72,14 @@ jobs:
           cache-environment: true
           cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.MACOS_YAML) }}
 
-      - name: Install SMRF override
-        if: ${{ inputs.smrf_ref != '' }}
+      - name: Install lastest SMRF and pysnobal
+        if: ${{ inputs.latest != '' }}
         run: |
-          micromamba run -n isnobal python -m pip install --no-deps \
-            "git+https://github.com/iSnobal/SMRF.git@${{ inputs.smrf_ref }}"
+          micromamba run -n isnobal python -m pip install -e "git+https://github.com/iSnobal/SMRF.git@main"
+          micromamba run -n isnobal python -m pip install -e "git+https://github.com/iSnobal/pysnobal.git@main"
         shell: bash
 
-      - name: Run unittests
+      - name: Run
         run: |
           micromamba run -n isnobal make install
           micromamba run -n isnobal make tests

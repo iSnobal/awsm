@@ -1,19 +1,8 @@
-name: Tests - Release Tags
+name: Tests - latest HEAD
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - v*
-    paths-ignore:
-      - LICENSE
-      - "**.md"
-      - .gitignore
-      - .editorconfig
   pull_request:
-    branches:
-      - main
+    types: [labeled]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -24,4 +13,7 @@ permissions:
 
 jobs:
   unittest:
+    if: github.event.label.name == 'test-latest-main'
     uses: ./.github/workflows/test_base.yml
+    with:
+      latest: main
