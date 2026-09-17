@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: '0 6 * * 1'
 
+permissions:
+  contents: read
+
 jobs:
   unittest:
     uses: ./.github/workflows/test_base.yml
