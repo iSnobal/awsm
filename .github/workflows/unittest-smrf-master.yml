@@ -1,15 +1,15 @@
 name: Unittest - SMRF master
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 6 * * 1'
+  pull_request:
+    types: [labeled]
 
 permissions:
   contents: read
 
 jobs:
   unittest:
+    if: github.event.label.name == 'test-smrf-master'
     uses: ./.github/workflows/test_base.yml
     with:
       smrf_ref: master
