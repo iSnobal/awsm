@@ -1,0 +1,85 @@
+name: Test Base
+
+on:
+  workflow_call:
+    inputs:
+      latest:
+        description: Optional git ref to install latest for pysnobal and SMRF before running AWSM tests
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      GCC_VERSION: 11
+      LINUX_YAML: isnobal_linux.yaml
+      MACOS_YAML: isnobal_macOS.yaml
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Linux
+        if: runner.os == 'Linux'
+        run: |
+          # Download environment file
+          wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/${{ env.LINUX_YAML }}
+          # Install GCC
+          sudo apt-get update
+          sudo apt-get install -y gcc-${{ env.GCC_VERSION }} g++-${{ env.GCC_VERSION }}
+          # Update alternatives for system-wide default
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ env.GCC_VERSION }} 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ env.GCC_VERSION }} 100
+          # Check
+          gcc --version
+          g++ --version
+        shell: bash
+
+      - name: Setup Mac OS
+        if: runner.os == 'macOS'
+        run: |
+          # Download environment file
+          wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/${{ env.MACOS_YAML }}
+        shell: bash
+
+      - name: Setup micromamba (Linux)
+        if: runner.os == 'Linux'
+        env:
+          CC: gcc-${{ env.GCC_VERSION }}
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: ${{ env.LINUX_YAML }}
+          init-shell: bash
+          cache-environment: true
+          cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.LINUX_YAML) }}
+
+      - name: Setup micromamba (macOS)
+        if: runner.os == 'macOS'
+        env:
+          CONDA_SUBDIR: osx-64
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: ${{ env.MACOS_YAML }}
+          init-shell: bash
+          cache-environment: true
+          cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.MACOS_YAML) }}
+
+      - name: Install lastest SMRF and pysnobal
+        if: ${{ inputs.latest != '' }}
+        run: |
+          micromamba run -n isnobal python -m pip install -e "git+https://github.com/iSnobal/SMRF.git@main"
+          micromamba run -n isnobal python -m pip install -e "git+https://github.com/iSnobal/pysnobal.git@main"
+        shell: bash
+
+      - name: Run
+        run: |
+          micromamba run -n isnobal make install
+          micromamba run -n isnobal make tests
