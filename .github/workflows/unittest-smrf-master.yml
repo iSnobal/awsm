@@ -1,0 +1,12 @@
+name: Unittest - SMRF master
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  unittest:
+    uses: ./.github/workflows/test_base.yml
+    with:
+      smrf_ref: master
