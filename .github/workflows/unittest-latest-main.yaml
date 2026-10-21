@@ -1,0 +1,19 @@
+name: Tests - latest HEAD
+
+on:
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    if: github.event.label.name == 'test-latest-main'
+    uses: ./.github/workflows/test_base.yml
+    with:
+      latest: main
