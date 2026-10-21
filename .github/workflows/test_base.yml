@@ -75,8 +75,8 @@ jobs:
       - name: Install lastest SMRF and pysnobal
         if: ${{ inputs.latest != '' }}
         run: |
-          micromamba run -n isnobal python -m pip install -e "git+https://github.com/iSnobal/SMRF.git@main"
-          micromamba run -n isnobal python -m pip install -e "git+https://github.com/iSnobal/pysnobal.git@main"
+          micromamba run -n isnobal python -m pip install "git+https://github.com/iSnobal/SMRF.git@main"
+          micromamba run -n isnobal python -m pip install "git+https://github.com/iSnobal/pysnobal.git@main"
         shell: bash
 
       - name: Run
