@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 jobs:
-  unittest:
+  unittest-latest:
     uses: ./.github/workflows/test_base.yml
     with:
-      latest: main
+      latest: true

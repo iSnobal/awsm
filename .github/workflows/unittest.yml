@@ -15,6 +15,8 @@ permissions:
   contents: read
 
 jobs:
-  unittest:
-    if: github.event.label.name == 'release'
+  unittest-release:
+    if: github.event.label.name == 'release' || github.event_name == 'push'
     uses: ./.github/workflows/test_base.yml
+    with:
+      latest: false
