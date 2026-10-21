@@ -1,19 +1,11 @@
 name: Tests - Release Tags
 
 on:
+  pull_request:
+    types: [labeled]
   push:
-    branches:
-      - main
     tags:
       - v*
-    paths-ignore:
-      - LICENSE
-      - "**.md"
-      - .gitignore
-      - .editorconfig
-  pull_request:
-    branches:
-      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -24,4 +16,5 @@ permissions:
 
 jobs:
   unittest:
+    if: github.event.label.name == 'release'
     uses: ./.github/workflows/test_base.yml
