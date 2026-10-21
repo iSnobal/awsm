@@ -4,10 +4,10 @@ on:
   workflow_call:
     inputs:
       latest:
-        description: Optional git ref to install latest for pysnobal and SMRF before running AWSM tests
+        description: Optional flag to install latest for pysnobal and SMRF before running AWSM tests
         required: false
-        type: string
-        default: ""
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -72,14 +72,19 @@ jobs:
           cache-environment: true
           cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.MACOS_YAML) }}
 
-      - name: Install lastest SMRF and pysnobal
-        if: ${{ inputs.latest != '' }}
+      - name: Install latest SMRF and pysnobal
+        if: ${{ inputs.latest }}
         run: |
           micromamba run -n isnobal python -m pip install "git+https://github.com/iSnobal/SMRF.git@main"
           micromamba run -n isnobal python -m pip install "git+https://github.com/iSnobal/pysnobal.git@main"
+          micromamba run -n isnobal make install-dev
         shell: bash
 
-      - name: Run
+      - name: Install release
+        if: ${{ !inputs.latest }}
         run: |
           micromamba run -n isnobal make install
+
+      - name: Run tests
+        run: |
           micromamba run -n isnobal make tests
