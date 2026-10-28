@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    'smrf @ git+https://github.com/UofU-Cryosphere/smrf.git@20261022',
+    'smrf @ git+https://github.com/iSnobal/smrf.git@20261022',
     'pysnobal @ git+https://github.com/iSnobal/pysnobal.git@20260126',
 ]
 
