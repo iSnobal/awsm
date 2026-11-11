@@ -5,7 +5,7 @@ from pathlib import Path
 
 import netCDF4 as nc
 import numpy as np
-from spatialnc.proj import add_proj
+from smrf.utils.spatialnc import add_proj, add_proj_from_file
 
 # NetCDF file parameters
 COMPRESSION = dict(compression="zlib", complevel=4)
@@ -45,7 +45,7 @@ def create_netCDF(
         Create file in open state
     """
     if os.path.isfile(filename):
-        myawsm._logger.warning("Removing existing {} file".format(filename))
+        myawsm._logger.warning(f"Removing existing {filename} file")
         os.remove(filename)
 
     netcdf_file = nc.Dataset(filename, "w")
@@ -161,7 +161,7 @@ def output_files(options, init, start_date, myawsm):
     em = create_netCDF(file_path, start_date, init, myawsm)
     create_variables(em, em_variables, myawsm)
 
-    em = add_proj(em, None, myawsm.topo.topoConfig["filename"])
+    em = add_proj(em, add_proj_from_file(myawsm.topo.topoConfig["filename"]))
 
     options["output"]["em"] = em
 
@@ -208,7 +208,7 @@ def output_files(options, init, start_date, myawsm):
     snow = create_netCDF(file_path, start_date, init, myawsm)
     create_variables(snow, snow_variables, myawsm)
 
-    snow = add_proj(snow, None, myawsm.topo.topoConfig["filename"])
+    snow = add_proj(snow, add_proj_from_file(myawsm.topo.topoConfig["filename"]))
 
     options["output"]["snow"] = snow
 
