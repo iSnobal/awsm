@@ -5,12 +5,8 @@ from pathlib import Path
 
 import netCDF4 as nc
 import numpy as np
+from smrf.output.output_netcdf import OutputNetcdf
 from smrf.utils.spatialnc import add_proj, add_proj_from_file
-
-# NetCDF file parameters
-COMPRESSION = dict(compression="zlib", complevel=4)
-DIMENSIONS = ("time", "y", "x")
-LEAST_SIGNIFICANT_DIGITS = 4
 
 C_TO_K = 273.16
 FREEZE = C_TO_K
@@ -56,9 +52,18 @@ def create_netCDF(
     netcdf_file.createDimension("x", len(init["x"]))
 
     # Variables for dimensions
-    time = netcdf_file.createVariable("time", "f4", DIMENSIONS[0], **COMPRESSION)
-    x = netcdf_file.createVariable("y", "f4", DIMENSIONS[1], **COMPRESSION)
-    y = netcdf_file.createVariable("x", "f4", DIMENSIONS[2], **COMPRESSION)
+    time = netcdf_file.createVariable(
+        "time",
+        "f4",
+        OutputNetcdf.DIMENSIONS[0],
+        **OutputNetcdf.COORD_COMPRESSION,
+    )
+    x = netcdf_file.createVariable(
+        "y", "f4", OutputNetcdf.DIMENSIONS[1], **OutputNetcdf.COORD_COMPRESSION
+    )
+    y = netcdf_file.createVariable(
+        "x", "f4", OutputNetcdf.DIMENSIONS[2], **OutputNetcdf.COORD_COMPRESSION
+    )
 
     time.units = "hours since %s" % start_date.tz_localize(None)
     time.time_zone = str(myawsm.tzinfo).lower()
@@ -97,9 +102,9 @@ def create_variables(netcdf_file: nc.Dataset, variables: dict, myawsm):
             nc_variable = netcdf_file.createVariable(
                 variable,
                 "f4",
-                DIMENSIONS,
-                **COMPRESSION,
-                least_significant_digit=LEAST_SIGNIFICANT_DIGITS,
+                OutputNetcdf.DIMENSIONS,
+                **OutputNetcdf.COMPRESSION,
+                least_significant_digit=OutputNetcdf.LEAST_SIGNIFICANT_DIGITS,
             )
             nc_variable.units = variables["units"][index]
             nc_variable.description = variables["description"][index]
