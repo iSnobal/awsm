@@ -24,7 +24,7 @@ MOUNTAIN = \
     r"IIIIilIIIIITTTTTTTIIIIIIIIIIIIITTTTTIIIIIIIIITTTTTTTTTTIIIIIIIIIlIIIIIIIITTTT" + "\n" \
     r"IIIIIIIIITTTTTTTTTTTTTIIIIIIIITTTTTTTTIIIIIITTTTTTTTTTTTTTIIIIIIIIIIIIIITTTTT" + "\n"
 
-MOUNTAIN_SM = """
+MOUNTAIN_SM = r"""
              /\                   /\ 
             /**\     /\          /**\ 
            /****\   /**\        /****\    /\ 

@@ -63,7 +63,7 @@ class AWSM:
         self.mask_isnobal = self.config["awsm master"]["mask_isnobal"]
 
         # store smrf version if running smrf
-        self.smrf_version = smrf.__version__
+        self.smrf_version = smrf.version.__version__
 
         # Time step mass thresholds for iSnobal
         self.mass_thresh = []
@@ -234,7 +234,7 @@ class AWSM:
             )
 
         self.config["awsm system"]["log_file"] = logfile
-        logger.SMRFLogger(self.config["awsm system"])
+        logger.setup_logging(self.config["awsm system"], ("awsm", logger.SMRF_LOGGER))
 
         self._logger = logging.getLogger(__name__)
 
