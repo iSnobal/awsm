@@ -234,7 +234,7 @@ class AWSM:
             )
 
         self.config["awsm system"]["log_file"] = logfile
-        logger.SMRFLogger(self.config["awsm system"])
+        logger.setup_logging(self.config["awsm system"], ("awsm", logger.SMRF_LOGGER))
 
         self._logger = logging.getLogger(__name__)
 
