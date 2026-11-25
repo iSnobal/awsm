@@ -20,6 +20,6 @@ __config_titles__ = {
 }
 __config_header__ = "Configuration File for AWSM {0}\n Using SMRF {1}\n".format(
         __version__,
-        smrf.__version__,
+        smrf.version.__version__,
 
 )
